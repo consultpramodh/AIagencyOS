@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_title %}Mobile Companion{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Mobile Companion</p>
+    <h1>Fast approvals and today view</h1>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Approval Inbox</h2>
+  <ul class="list">
+    {% for a in approvals %}
+    <li>
+      <span>Run #{{ a.run_id }} · {{ a.step_name }}</span>
+      <span class="pill">{{ a.status }}</span>
+    </li>
+    <form method="post" action="/workflows/runs/{{ a.run_id }}/approve?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+      <button class="btn btn-small" type="submit">Approve</button>
+    </form>
+    {% else %}<li>No pending approvals</li>{% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Today</h2>
+  <ul class="list">
+    {% for t in today_tasks %}
+    <li><span>{{ t.title }}{% if t.due_date %} ({{ t.due_date }}){% endif %}</span><span class="pill">{{ t.status }}</span></li>
+    {% else %}<li>No due tasks</li>{% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Run Status</h2>
+  <ul class="list">
+    {% for r in runs %}
+    <li><span>Workflow #{{ r.workflow_id }} Run #{{ r.id }}</span><span class="pill">{{ r.status }}</span></li>
+    {% else %}<li>No runs</li>{% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Quick Notes</h2>
+  <ul class="list">
+    {% for n in notes %}
+    <li><span>{{ n.title }}</span><span class="pill">updated</span></li>
+    {% else %}<li>No notes</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}

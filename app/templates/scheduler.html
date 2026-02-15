@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block page_title %}Scheduler{% endblock %}
+{% block content %}
+<section class="hero card glass"><div><p class="eyebrow">Scheduler</p><h1>Service Scheduler Pipeline</h1></div></section>
+<section class="card">
+  {% if ctx.membership.role in ["owner", "admin"] %}
+  <form method="post" action="/service-jobs?tenant_id={{ ctx.tenant.id }}" class="inline-form board-form">
+    <input class="input" required type="text" name="title" placeholder="Service request title" />
+    <input class="input" type="text" name="service_type" placeholder="Service type" />
+    <input class="input" type="date" name="scheduled_for" />
+    <select class="select" name="client_id"><option value="">No client</option>{% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select>
+    <button class="btn" type="submit">Add request</button>
+  </form>
+  {% endif %}
+  <div class="kanban four">
+    <div class="lane"><h3>Intake</h3>{% for item in service_intake %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="scheduled" /><button class="btn btn-small" type="submit">Schedule</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
+    <div class="lane"><h3>Scheduled</h3>{% for item in service_scheduled %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="in_service" /><button class="btn btn-small" type="submit">Start</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
+    <div class="lane"><h3>In Service</h3>{% for item in service_in_service %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="completed" /><button class="btn btn-small" type="submit">Complete</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
+    <div class="lane"><h3>Completed</h3>{% for item in service_completed %}<div class="task-card"><strong>{{ item.title }}</strong></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
+  </div>
+</section>
+{% endblock %}

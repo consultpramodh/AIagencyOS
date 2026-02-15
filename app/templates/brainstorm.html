@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_title %}Brainstorm{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Brainstorm</p>
+    <h1>Goal to plan in guided steps</h1>
+    <p class="subtle">Answer 5-7 questions, get agent/team/workflow recommendations.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>New Session</h2>
+  <form method="post" action="/brainstorm?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <input class="input" name="title" placeholder="Example: grow leads for dental clinic" required />
+    <button class="btn" type="submit">Start</button>
+  </form>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Sessions</h2>
+    <ul class="list">
+      {% for s in sessions %}
+      <li><a class="text-link" href="/brainstorm?tenant_id={{ ctx.tenant.id }}&session_id={{ s.id }}">{{ s.title }}</a></li>
+      {% else %}<li>No sessions</li>{% endfor %}
+    </ul>
+  </article>
+
+  {% if selected %}
+  <article class="card">
+    <h2>Questions</h2>
+    {% for qa in qas %}
+    <form method="post" action="/brainstorm/{{ selected.id }}/answers/{{ qa.id }}?tenant_id={{ ctx.tenant.id }}" class="stack note-form">
+      <label><strong>Q{{ qa.question_order }}.</strong> {{ qa.question }}</label>
+      <textarea class="input" name="answer" rows="3">{{ qa.answer }}</textarea>
+      <button class="btn btn-small" type="submit">Save Answer</button>
+    </form>
+    {% endfor %}
+    <form method="post" action="/brainstorm/{{ selected.id }}/recommend?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <button class="btn" type="submit">Generate Recommendation</button>
+    </form>
+    {% if rec %}
+    <form method="post" action="/brainstorm/{{ selected.id }}/create-workflow?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <button class="btn" type="submit">Create Editable Workflow</button>
+    </form>
+    <pre>{{ rec.workflow_draft_json }}</pre>
+    {% endif %}
+  </article>
+  {% endif %}
+</section>
+{% endblock %}

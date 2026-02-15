@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routes import auth, dashboard, jobs
+from app.routes import auth, brainstorm, connectors, crm, dashboard, jobs, mobile, workflows
 
 app = FastAPI(title="AI Marketing Agency OS")
 
@@ -16,6 +16,11 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
+app.include_router(crm.router)
+app.include_router(workflows.router)
+app.include_router(brainstorm.router)
+app.include_router(connectors.router)
+app.include_router(mobile.router)
 app.include_router(jobs.router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

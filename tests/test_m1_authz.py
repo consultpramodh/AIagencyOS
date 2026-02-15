@@ -24,8 +24,18 @@ def test_viewer_cannot_create_client(client):
 def test_owner_can_create_client(client):
     _login(client, "owner@test.local", "pass1234")
 
-    response = client.post("/clients?tenant_id=1", data={"name": "Allowed Co"}, follow_redirects=False)
+    response = client.post(
+        "/clients?tenant_id=1",
+        data={
+            "name": "Allowed Co",
+            "contact_name": "A Person",
+            "contact_email": "a@co.test",
+            "contact_phone": "+15550001111",
+        },
+        follow_redirects=False,
+    )
     assert response.status_code == 303
 
-    page = client.get("/?tenant_id=1")
+    page = client.get("/clients?tenant_id=1")
     assert "Allowed Co" in page.text
+    assert "a@co.test" in page.text

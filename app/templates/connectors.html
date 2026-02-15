@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block page_title %}Connectors{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Connectors</p>
+    <h1>Integration framework (manual-first)</h1>
+    <p class="subtle">Configure stubs now, switch to API mode later.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Add Connector Instance</h2>
+  <form method="post" action="/connectors?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <select class="select" name="connector_type_id" required>
+      {% for t in types %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+    </select>
+    <input class="input" name="name" placeholder="Instance name" required />
+    <select class="select" name="mode">
+      <option value="manual">manual</option>
+      <option value="api">api</option>
+    </select>
+    <button class="btn" type="submit">Create</button>
+  </form>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Instances</h2>
+    <ul class="list">
+      {% for i in instances %}
+      <li>
+        <span>{{ i.name }} ({{ i.mode }})</span>
+        <span class="pill">{{ 'configured' if cred_by_instance.get(i.id) and cred_by_instance.get(i.id).is_configured else 'pending' }}</span>
+      </li>
+      <form method="post" action="/connectors/{{ i.id }}/run?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+        <button class="btn btn-small" type="submit">Run</button>
+      </form>
+      {% else %}<li>No connectors</li>{% endfor %}
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>Run History</h2>
+    <ul class="list">
+      {% for r in runs %}
+      <li><span>#{{ r.id }} · {{ r.log }}</span><span class="pill">{{ r.status }}</span></li>
+      {% else %}<li>No runs</li>{% endfor %}
+    </ul>
+  </article>
+</section>
+{% endblock %}

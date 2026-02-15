@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block page_title %}Operations{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Operations Hub</p>
+    <h1>Choose your workspace</h1>
+    <p class="subtle">Each function has its own focused screen. No more feature dumping.</p>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Clients</h2>
+    <p class="subtle">Profiles, contacts, quick call/email/text.</p>
+    <a class="text-link" href="/clients?tenant_id={{ ctx.tenant.id }}">Open Clients</a>
+  </article>
+  <article class="card">
+    <h2>Projects</h2>
+    <p class="subtle">Project spaces linked to clients.</p>
+    <a class="text-link" href="/projects?tenant_id={{ ctx.tenant.id }}">Open Projects</a>
+  </article>
+  <article class="card">
+    <h2>Tasks</h2>
+    <p class="subtle">Kanban and today queue.</p>
+    <a class="text-link" href="/tasks?tenant_id={{ ctx.tenant.id }}">Open Tasks</a>
+  </article>
+  <article class="card">
+    <h2>Notes & Docs</h2>
+    <p class="subtle">Docs and attachments.</p>
+    <a class="text-link" href="/notes?tenant_id={{ ctx.tenant.id }}">Open Notes</a>
+  </article>
+  <article class="card">
+    <h2>Service Scheduler</h2>
+    <p class="subtle">Pipeline for service requests.</p>
+    <a class="text-link" href="/scheduler?tenant_id={{ ctx.tenant.id }}">Open Scheduler</a>
+  </article>
+  <article class="card">
+    <h2>Calendar</h2>
+    <p class="subtle">Upcoming events and due items.</p>
+    <a class="text-link" href="/calendar?tenant_id={{ ctx.tenant.id }}">Open Calendar</a>
+  </article>
+</section>
+{% endblock %}

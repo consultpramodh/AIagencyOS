@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block page_title %}Workflows{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Workflows</p>
+    <h1>Automation builder + runner</h1>
+    <p class="subtle">Create workflow, add steps, run, and monitor logs/jobs live.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Create Workflow</h2>
+  <form method="post" action="/workflows?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <input class="input" name="name" placeholder="Workflow name" required />
+    <input class="input" name="description" placeholder="Description" />
+    <button class="btn" type="submit">Create</button>
+  </form>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Workflows</h2>
+    <ul class="list">
+      {% for wf in workflows %}
+      <li><a class="text-link" href="/workflows?tenant_id={{ ctx.tenant.id }}&workflow_id={{ wf.id }}">{{ wf.name }} (v{{ wf.version }})</a></li>
+      {% else %}<li>No workflows</li>{% endfor %}
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>Jobs Panel</h2>
+    <ul class="list">
+      {% for job in jobs %}
+      <li><span>#{{ job.id }} {{ job.kind }}</span><span class="pill">{{ job.status }} {{ job.progress }}%</span></li>
+      {% else %}<li>No jobs yet</li>{% endfor %}
+    </ul>
+  </article>
+</section>
+
+{% if selected %}
+<section class="card">
+  <h2>Selected Workflow: {{ selected.name }}</h2>
+  <form method="post" action="/workflows/{{ selected.id }}/steps?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <input class="input" name="name" placeholder="Step name" required />
+    <input class="input" name="action_type" placeholder="Action type" value="manual" />
+    <input class="input" name="agent_key" placeholder="Agent key" value="ops_lead" />
+    <select class="select" name="gating_policy">
+      <option value="approve">approve</option>
+      <option value="auto">auto</option>
+      <option value="pause">pause</option>
+    </select>
+    <input class="input" name="config_json" value="{}" />
+    <button class="btn" type="submit">Add Step</button>
+  </form>
+  <form method="post" action="/workflows/{{ selected.id }}/run?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <button class="btn" type="submit">Run Workflow</button>
+  </form>
+
+  <h3>Steps</h3>
+  <ul class="list">
+    {% for step in steps %}
+    <li><span>{{ step.step_order }}. {{ step.name }} · {{ step.agent_key }}</span><span class="pill">{{ step.gating_policy }}</span></li>
+    {% else %}<li>No steps</li>{% endfor %}
+  </ul>
+
+  <h3>Runs</h3>
+  <ul class="list">
+    {% for run in runs %}
+    <li>
+      <span>Run #{{ run.id }} · {{ run.created_at }}</span>
+      <span class="pill">{{ run.status }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% for a in approvals %}
+  {% if a.status == 'pending' %}
+  <form method="post" action="/workflows/runs/{{ a.run_id }}/approve?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <span class="subtle">Approval needed: {{ a.step_name }}</span>
+    <button class="btn btn-small" type="submit">Approve</button>
+  </form>
+  {% endif %}
+  {% endfor %}
+
+  <h3>Logs</h3>
+  <div class="log" id="run-log">
+    {% for log in logs %}
+    <div class="log-line">{{ log.created_at }} · {{ log.message }}</div>
+    {% else %}
+    <div class="log-line">No logs yet</div>
+    {% endfor %}
+  </div>
+
+  {% if runs %}
+  <script>
+    const runId = {{ runs[0].id }};
+    const logBox = document.getElementById("run-log");
+    const stream = new EventSource(`/jobs/stream?tenant_id={{ ctx.tenant.id }}&run_id=${runId}`);
+    stream.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.textContent = `${data.at} · ${data.message}`;
+      logBox.prepend(line);
+      if (["succeeded", "failed", "blocked", "canceled"].includes(data.status)) {
+        stream.close();
+      }
+    }
+  </script>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

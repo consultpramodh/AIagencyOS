@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block page_title %}Tasks{% endblock %}
+{% block content %}
+<section class="hero card glass"><div><p class="eyebrow">Tasks</p><h1>Task Board</h1></div></section>
+<section class="card">
+  <h2>Today Queue</h2>
+  <ul class="list">
+    {% for task in today_tasks %}<li><span>{{ task.title }}{% if task.due_date %} ({{ task.due_date }}){% endif %}</span><span class="pill">{{ task.status|replace('_',' ')|title }}</span></li>{% else %}<li>No due tasks today</li>{% endfor %}
+  </ul>
+</section>
+<section class="card">
+  {% if ctx.membership.role in ["owner", "admin"] %}
+  <form method="post" action="/tasks?tenant_id={{ ctx.tenant.id }}" class="inline-form board-form">
+    <input class="input" required type="text" name="title" placeholder="Task title" />
+    <input class="input" type="date" name="due_date" />
+    <select class="select" name="project_id"><option value="">No project</option>{% for project in projects %}<option value="{{ project.id }}">{{ project.name }}</option>{% endfor %}</select>
+    <select class="select" name="status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option></select>
+    <button class="btn" type="submit">Create task</button>
+  </form>
+  {% endif %}
+  <div class="kanban">
+    <div class="lane"><h3>To do</h3>{% for task in tasks_todo %}<div class="task-card"><strong>{{ task.title }}</strong>{% if ctx.membership.role in ["owner", "admin"] %}<form method="post" action="/tasks/{{ task.id }}/status?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="status" value="in_progress" /><button class="btn btn-small" type="submit">Start</button></form>{% endif %}</div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
+    <div class="lane"><h3>In progress</h3>{% for task in tasks_in_progress %}<div class="task-card"><strong>{{ task.title }}</strong>{% if ctx.membership.role in ["owner", "admin"] %}<form method="post" action="/tasks/{{ task.id }}/status?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="status" value="done" /><button class="btn btn-small" type="submit">Done</button></form>{% endif %}</div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
+    <div class="lane"><h3>Done</h3>{% for task in tasks_done %}<div class="task-card"><strong>{{ task.title }}</strong></div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
+  </div>
+</section>
+{% endblock %}

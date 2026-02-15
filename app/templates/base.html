@@ -6,27 +6,75 @@
     <title>{{ title if title else "AI Marketing Agency OS" }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
-    <header class="topbar glass">
-      <div class="brand-wrap">
-        <div class="brand-dot"></div>
-        <div class="brand">AI Marketing Agency OS</div>
+  <body class="{% if not ctx %}auth-body{% endif %}">
+    {% if ctx %}
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-dot"></div>
+          <div>
+            <p class="eyebrow">Agency OS</p>
+            <strong>AI Marketing Agency</strong>
+          </div>
+        </div>
+
+        <nav class="side-nav">
+          <p class="side-label">Command</p>
+          <a class="side-link {% if request.url.path == '/' %}active{% endif %}" href="/?tenant_id={{ ctx.tenant.id }}">Dashboard</a>
+          <a class="side-link {% if request.url.path == '/operations' %}active{% endif %}" href="/operations?tenant_id={{ ctx.tenant.id }}">Operations</a>
+
+          <p class="side-label">Workspaces</p>
+          <a class="side-link {% if request.url.path == '/clients' %}active{% endif %}" href="/clients?tenant_id={{ ctx.tenant.id }}">Clients</a>
+          <a class="side-link {% if request.url.path == '/projects' %}active{% endif %}" href="/projects?tenant_id={{ ctx.tenant.id }}">Projects</a>
+          <a class="side-link {% if request.url.path == '/tasks' %}active{% endif %}" href="/tasks?tenant_id={{ ctx.tenant.id }}">Tasks</a>
+          <a class="side-link {% if request.url.path == '/notes' %}active{% endif %}" href="/notes?tenant_id={{ ctx.tenant.id }}">Notes</a>
+          <a class="side-link {% if request.url.path == '/scheduler' %}active{% endif %}" href="/scheduler?tenant_id={{ ctx.tenant.id }}">Scheduler</a>
+          <a class="side-link {% if request.url.path == '/calendar' %}active{% endif %}" href="/calendar?tenant_id={{ ctx.tenant.id }}">Calendar</a>
+
+          <p class="side-label">Growth</p>
+          <a class="side-link {% if request.url.path == '/crm' %}active{% endif %}" href="/crm?tenant_id={{ ctx.tenant.id }}">CRM</a>
+          <a class="side-link {% if request.url.path == '/workflows' %}active{% endif %}" href="/workflows?tenant_id={{ ctx.tenant.id }}">Workflows</a>
+          <a class="side-link {% if request.url.path == '/brainstorm' %}active{% endif %}" href="/brainstorm?tenant_id={{ ctx.tenant.id }}">Brainstorm</a>
+          <a class="side-link {% if request.url.path == '/connectors' %}active{% endif %}" href="/connectors?tenant_id={{ ctx.tenant.id }}">Connectors</a>
+          <a class="side-link {% if request.url.path == '/m' %}active{% endif %}" href="/m?tenant_id={{ ctx.tenant.id }}">Mobile</a>
+        </nav>
+
+        <form method="post" action="/logout" class="side-logout">
+          <button class="btn btn-ghost" type="submit">Logout</button>
+        </form>
+      </aside>
+
+      <div class="app-main">
+        <header class="app-topbar">
+          <h1 class="top-title">{% block page_title %}Dashboard{% endblock %}</h1>
+          <div class="top-right">
+            <span class="tenant-chip">{{ ctx.tenant.name }}</span>
+            <span class="tenant-chip">{{ ctx.user.full_name }}</span>
+          </div>
+        </header>
+
+        <div class="pulse-strip">
+          {% if pulse_metrics is defined and pulse_metrics %}
+            {% for metric in pulse_metrics %}
+            <div class="pulse-metric">
+              <span class="pulse-label">{{ metric.label }}</span>
+              <span class="pulse-value">{{ metric.value }}</span>
+              <span class="pulse-trend {% if metric.direction == 'up' %}good{% elif metric.direction == 'down' %}bad{% else %}neutral{% endif %}">{{ metric.trend }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="pulse-metric"><span class="pulse-label">Tenant</span><span class="pulse-value">{{ ctx.tenant.name }}</span><span class="pulse-trend neutral">live</span></div>
+          {% endif %}
+        </div>
+
+        <main class="container">{% block content %}{% endblock %}</main>
       </div>
-      {% if ctx %}
-      <nav class="topnav">
-        <a href="/?tenant_id={{ ctx.tenant.id }}">Today</a>
-        <a href="/?tenant_id={{ ctx.tenant.id }}#clients">Clients</a>
-        <a href="/?tenant_id={{ ctx.tenant.id }}#projects">Projects</a>
-        <a href="/?tenant_id={{ ctx.tenant.id }}#jobs">Jobs</a>
-      </nav>
-      <form method="post" action="/logout">
-        <button class="btn btn-ghost" type="submit">Logout</button>
-      </form>
-      {% endif %}
-    </header>
-    <main class="container">{% block content %}{% endblock %}</main>
+    </div>
+    {% else %}
+    <main class="container auth-only">{% block content %}{% endblock %}</main>
+    {% endif %}
   </body>
 </html>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block page_title %}Calendar{% endblock %}
+{% block content %}
+<section class="hero card glass"><div><p class="eyebrow">Calendar</p><h1>Upcoming Schedule</h1></div></section>
+<section class="card">
+  {% if ctx.membership.role in ["owner", "admin"] %}
+  <form method="post" action="/calendar-events?tenant_id={{ ctx.tenant.id }}" class="inline-form board-form">
+    <input class="input" required type="text" name="title" placeholder="Event title" />
+    <input class="input" required type="date" name="event_date" />
+    <input class="input" type="text" name="notes" placeholder="Notes" />
+    <button class="btn" type="submit">Add event</button>
+  </form>
+  {% endif %}
+  <ul class="list">
+    {% for row in calendar_rows %}<li><span>{{ row[0] }} · {{ row[1] }}</span><span class="pill">{{ row[2] }}</span></li>{% else %}<li>No upcoming items</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}

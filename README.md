@@ -1,6 +1,6 @@
 # AI Marketing Agency OS
 
-M1 foundation for a multi-tenant SaaS using FastAPI, Jinja2, SQLAlchemy, and Alembic.
+M1-M7 build for a multi-tenant AI Marketing Agency OS using FastAPI, Jinja2, SQLAlchemy, and Alembic.
 
 ## One-command local run
 
@@ -48,8 +48,19 @@ make migrate
 make seed
 make test
 make demo
+make demo-m2
+make demo-full
 make run
 ```
+
+## Key Routes
+
+- `/` Today dashboard (clients/projects/tasks/notes/scheduler/calendar/jobs)
+- `/crm` CRM-lite pipeline (contacts/deals/activities)
+- `/workflows` Workflow builder + runs + approvals + logs
+- `/brainstorm` Brainstorm Q/A to recommendation to workflow
+- `/connectors` Connector framework (manual-first stubs)
+- `/m` Mobile companion (approvals/today/run status/notes)
 
 ## Tests
 

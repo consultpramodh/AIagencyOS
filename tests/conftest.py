@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import app.core.db as core_db
 from app.core.db import Base, get_db
 from app.core.security import hash_password
 from app.main import app
@@ -43,6 +44,9 @@ def client() -> Generator[TestClient, None, None]:
     db.commit()
     db.close()
 
+    original_session_local = core_db.SessionLocal
+    core_db.SessionLocal = TestingSessionLocal
+
     def override_get_db():
         test_db = TestingSessionLocal()
         try:
@@ -51,8 +55,12 @@ def client() -> Generator[TestClient, None, None]:
             test_db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.state.testing_sessionmaker = TestingSessionLocal
 
     with TestClient(app) as c:
         yield c
 
     app.dependency_overrides.clear()
+    if hasattr(app.state, "testing_sessionmaker"):
+        delattr(app.state, "testing_sessionmaker")
+    core_db.SessionLocal = original_session_local

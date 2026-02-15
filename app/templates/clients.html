@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block page_title %}Clients{% endblock %}
+{% block content %}
+<section class="hero card glass"><div><p class="eyebrow">Clients</p><h1>Client Portfolio</h1></div></section>
+<section class="card">
+  <h2>All Clients</h2>
+  <ul class="list">
+    {% for client in clients %}
+    <li class="client-row">
+      <div>
+        <strong>{{ client.name }}</strong>
+        <p class="subtle">{{ client.contact_name if client.contact_name else "No contact" }}{% if client.contact_email %} · {{ client.contact_email }}{% endif %}{% if client.contact_phone %} · {{ client.contact_phone }}{% endif %}</p>
+        <div class="quick-actions">
+          {% if client.contact_phone %}<a class="chip-link" href="tel:{{ client.contact_phone }}">Call</a>{% endif %}
+          {% if client.contact_email %}<a class="chip-link" href="mailto:{{ client.contact_email }}">Email</a>{% endif %}
+          {% if client.contact_phone %}<a class="chip-link" href="sms:{{ client.contact_phone }}">Text</a>{% endif %}
+        </div>
+      </div>
+      <span class="pill">{{ client.status|capitalize }}</span>
+    </li>
+    {% else %}<li>No clients yet</li>{% endfor %}
+  </ul>
+  {% if ctx.membership.role in ["owner", "admin"] %}
+  <form method="post" action="/clients?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <input class="input" required type="text" name="name" placeholder="Client name" />
+    <input class="input" type="text" name="contact_name" placeholder="Contact name" />
+    <input class="input" type="email" name="contact_email" placeholder="Contact email" />
+    <input class="input" type="text" name="contact_phone" placeholder="Contact phone" />
+    <button class="btn" type="submit">Add Client</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

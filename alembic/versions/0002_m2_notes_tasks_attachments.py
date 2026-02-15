@@ -68,7 +68,7 @@ def upgrade() -> None:
         sa.Column("note_id", sa.Integer(), nullable=False),
         sa.Column("uploaded_by_user_id", sa.Integer(), nullable=False),
         sa.Column("original_name", sa.String(length=255), nullable=False),
-        sa.Column("storage_path", sa.String(length=512), nullable=False),
+        sa.Column("storage_path", sa.String(length=512), nullable=False, unique=True),
         sa.Column("mime_type", sa.String(length=120), nullable=False),
         sa.Column("size_bytes", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
@@ -80,11 +80,9 @@ def upgrade() -> None:
     op.create_index(op.f("ix_attachments_tenant_id"), "attachments", ["tenant_id"], unique=False)
     op.create_index(op.f("ix_attachments_note_id"), "attachments", ["note_id"], unique=False)
     op.create_index(op.f("ix_attachments_uploaded_by_user_id"), "attachments", ["uploaded_by_user_id"], unique=False)
-    op.create_unique_constraint("uq_attachments_storage_path", "attachments", ["storage_path"])
 
 
 def downgrade() -> None:
-    op.drop_constraint("uq_attachments_storage_path", "attachments", type_="unique")
     op.drop_index(op.f("ix_attachments_uploaded_by_user_id"), table_name="attachments")
     op.drop_index(op.f("ix_attachments_note_id"), table_name="attachments")
     op.drop_index(op.f("ix_attachments_tenant_id"), table_name="attachments")
