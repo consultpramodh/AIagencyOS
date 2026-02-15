@@ -3,5 +3,7 @@ __pycache__/
 *.pyc
 agency_os.db
 .pytest_cache/
-
 .DS_Store
+
+# Local runtime uploads
+data/uploads/
