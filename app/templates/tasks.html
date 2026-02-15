@@ -18,10 +18,35 @@
     <button class="btn" type="submit">Create task</button>
   </form>
   {% endif %}
-  <div class="kanban">
-    <div class="lane"><h3>To do</h3>{% for task in tasks_todo %}<div class="task-card"><strong>{{ task.title }}</strong>{% if ctx.membership.role in ["owner", "admin"] %}<form method="post" action="/tasks/{{ task.id }}/status?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="status" value="in_progress" /><button class="btn btn-small" type="submit">Start</button></form>{% endif %}</div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
-    <div class="lane"><h3>In progress</h3>{% for task in tasks_in_progress %}<div class="task-card"><strong>{{ task.title }}</strong>{% if ctx.membership.role in ["owner", "admin"] %}<form method="post" action="/tasks/{{ task.id }}/status?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="status" value="done" /><button class="btn btn-small" type="submit">Done</button></form>{% endif %}</div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
-    <div class="lane"><h3>Done</h3>{% for task in tasks_done %}<div class="task-card"><strong>{{ task.title }}</strong></div>{% else %}<p class="subtle">No tasks</p>{% endfor %}</div>
+  <p class="subtle">Drag cards between lanes to update status (including moving backward).</p>
+  <div class="kanban" data-board="tasks">
+    <div class="lane drop-lane" data-task-lane="todo">
+      <h3>To do</h3>
+      {% for task in tasks_todo %}
+      <div class="task-card dnd-card" data-task-id="{{ task.id }}" draggable="true">
+        <strong>{{ task.title }}</strong>
+        <p class="subtle">{{ task.priority|capitalize }}{% if task.due_date %} · due {{ task.due_date }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No tasks</p>{% endfor %}
+    </div>
+    <div class="lane drop-lane" data-task-lane="in_progress">
+      <h3>In progress</h3>
+      {% for task in tasks_in_progress %}
+      <div class="task-card dnd-card" data-task-id="{{ task.id }}" draggable="true">
+        <strong>{{ task.title }}</strong>
+        <p class="subtle">{{ task.priority|capitalize }}{% if task.due_date %} · due {{ task.due_date }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No tasks</p>{% endfor %}
+    </div>
+    <div class="lane drop-lane" data-task-lane="done">
+      <h3>Done</h3>
+      {% for task in tasks_done %}
+      <div class="task-card dnd-card" data-task-id="{{ task.id }}" draggable="true">
+        <strong>{{ task.title }}</strong>
+        <p class="subtle">{{ task.priority|capitalize }}{% if task.due_date %} · due {{ task.due_date }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No tasks</p>{% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}

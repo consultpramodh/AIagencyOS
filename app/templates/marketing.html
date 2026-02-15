@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block page_title %}Marketing{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Marketing</p>
+    <h1>Paid Campaign Planner</h1>
+    <p class="subtle">Simple 3-step flow: setup campaign, choose a proven template, review plan, and save.</p>
+  </div>
+</section>
+
+<section class="marketing-shell">
+  <article class="card marketing-panel">
+    <div class="card-head">
+      <h2>1. Setup Campaign</h2>
+      <span class="subtle">Required fields only</span>
+    </div>
+    <form id="campaign-plan-form" method="post" action="/marketing/plan?tenant_id={{ ctx.tenant.id }}" class="marketing-form-grid">
+      <label class="field">
+        <span class="field-label">Client</span>
+        <select class="select" name="client_id" required>
+          {% for client in clients %}
+          <option value="{{ client.id }}" {% if preview_client_id and preview_client_id == client.id %}selected{% endif %}>{{ client.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Paid Platform</span>
+        <select id="marketing-platform" class="select" name="platform" required>
+          {% for p in platforms %}
+          <option value="{{ p }}" {% if preview_platform and preview_platform == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Campaign Objective</span>
+        <select id="marketing-objective" class="select" name="objective" required>
+          {% for objective in objectives %}
+          <option value="{{ objective }}" {% if preview_objective and preview_objective == objective %}selected{% endif %}>{{ objective }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Platform Sub-Type</span>
+        <select id="marketing-sub-option" class="select" name="sub_option">
+          {% if preview_sub_option %}
+          <option value="{{ preview_sub_option }}" selected>{{ preview_sub_option }}</option>
+          {% else %}
+          <option value="">Auto-select best option</option>
+          {% endif %}
+        </select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Total Budget (USD)</span>
+        <input class="input" type="number" name="budget" min="0" step="1" value="{{ default_budget }}" required />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Duration (Days)</span>
+        <input class="input" type="number" name="days" min="1" step="1" value="{{ default_days }}" required />
+      </label>
+
+      <details class="marketing-advanced">
+        <summary>Advanced SEO Inputs (Optional)</summary>
+        <div class="marketing-advanced-grid">
+          <label class="field field-wide">
+            <span class="field-label">Existing Keywords</span>
+            <input class="input" type="text" name="existing_keywords" value="{{ preview_existing_keywords|join(', ') }}" placeholder="comma-separated" />
+          </label>
+          <label class="field field-wide">
+            <span class="field-label">Website URL</span>
+            <input class="input" type="text" inputmode="url" name="website_url" value="{{ default_website_url }}" placeholder="classicfireplace.ca or https://classicfireplace.ca" />
+          </label>
+          <label class="field field-wide">
+            <span class="field-label">Social Handles</span>
+            <input class="input" type="text" name="social_handles" value="{{ default_social_handles }}" placeholder="@brand, @brand_ceo" />
+          </label>
+        </div>
+      </details>
+
+      <input id="marketing-template-name" type="hidden" name="template_name" value="{{ preview_template_name }}" />
+      <button class="btn" type="submit">Generate Plan</button>
+    </form>
+    <p id="platform-help" class="subtle marketing-help">Select a platform to see objective-specific guidance.</p>
+    <p id="selected-template-label" class="subtle marketing-help">{% if preview_template_name %}Selected template: {{ preview_template_name }}{% else %}No template selected yet.{% endif %}</p>
+  </article>
+
+  <article class="card marketing-panel">
+    <div class="card-head">
+      <h2>2. Pick Proven Template</h2>
+      <span class="subtle">One-click apply</span>
+    </div>
+    <ul id="platform-templates" class="list compact-list">
+      <li><span>Select a platform</span><span class="subtle">Templates appear here</span></li>
+    </ul>
+
+    {% if preview_plan %}
+    <div class="card-head" style="margin-top:12px;">
+      <h2>3. Review Plan</h2>
+      <span class="status-chip status-pass">{{ preview_plan.platform }} · {{ preview_plan.objective }}</span>
+    </div>
+
+    <div class="marketing-kpis">
+      <div><span class="eyebrow">Daily Budget</span><strong>${{ '%.2f' % (preview_plan.daily_budget_cents / 100) }}</strong></div>
+      <div><span class="eyebrow">Template</span><strong>{{ preview_plan.template_name }}</strong></div>
+      <div><span class="eyebrow">Sub-Type</span><strong>{{ preview_plan.sub_option }}</strong></div>
+    </div>
+
+    <ul class="list compact-list">
+      <li><span>Campaign type</span><span>{{ preview_plan.campaign_type }}</span></li>
+      <li><span>Bid strategy</span><span>{{ preview_plan.bid_strategy }}</span></li>
+      <li><span>Primary conversion</span><span>{{ preview_plan.conversion_event }}</span></li>
+    </ul>
+
+    <details class="marketing-detail">
+      <summary>Keyword Suggestions</summary>
+      <div class="grid-two">
+        <article>
+          <h3>Existing</h3>
+          <ul class="list compact-list">
+            {% for keyword in preview_existing_keywords %}
+            <li><span>{{ keyword }}</span></li>
+            {% else %}
+            <li><span>None</span></li>
+            {% endfor %}
+          </ul>
+        </article>
+        <article>
+          <h3>Suggested</h3>
+          <ul class="list compact-list">
+            {% for keyword in preview_added_keywords %}
+            <li><span>{{ keyword }}</span></li>
+            {% else %}
+            <li><span>No new suggestions</span></li>
+            {% endfor %}
+          </ul>
+        </article>
+      </div>
+    </details>
+
+    {% if preview_plan.seo_content %}
+    <details class="marketing-detail">
+      <summary>SEO Content Pack</summary>
+      <ul class="list compact-list">
+        <li><span>Title tag</span><span>{{ preview_plan.seo_content.on_page.title_tag }}</span></li>
+        <li><span>Meta description</span><span>{{ preview_plan.seo_content.on_page.meta_description }}</span></li>
+        <li><span>H1</span><span>{{ preview_plan.seo_content.on_page.h1 }}</span></li>
+      </ul>
+      <h3>Blog Outline</h3>
+      <ul class="list compact-list">
+        {% for item in preview_plan.seo_content.content_draft.outline %}
+        <li><span>{{ item }}</span></li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+
+    {% if ctx.membership.role in ["owner", "admin"] %}
+    <form method="post" action="/marketing/campaigns?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+      <input class="input" type="text" name="name" required placeholder="Campaign name" />
+      <input type="hidden" name="client_id" value="{{ preview_client_id }}" />
+      <input type="hidden" name="platform" value="{{ preview_plan.platform }}" />
+      <input type="hidden" name="objective" value="{{ preview_plan.objective }}" />
+      <input type="hidden" name="sub_option" value="{{ preview_plan.sub_option }}" />
+      <input type="hidden" name="template_name" value="{{ preview_plan.template_name }}" />
+      <input type="hidden" name="budget" value="{{ '%.2f' % (preview_plan.total_budget_cents / 100) }}" />
+      <input type="hidden" name="days" value="{{ preview_plan.days }}" />
+      <input type="hidden" name="existing_keywords" value="{{ preview_existing_keywords|join(', ') }}" />
+      <input type="hidden" name="website_url" value="{{ default_website_url }}" />
+      <input type="hidden" name="social_handles" value="{{ default_social_handles }}" />
+      <button class="btn" type="submit">Save Campaign</button>
+    </form>
+    {% endif %}
+    {% else %}
+    <div class="marketing-empty">
+      <p class="subtle">Run Step 1 to generate a complete campaign plan here.</p>
+    </div>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Saved Campaigns</h2><span class="subtle">{{ campaigns|length }} total</span></div>
+  <ul class="list compact-list" data-skeleton>
+    {% for campaign in campaigns %}
+    <li>
+      <div>
+        <strong>{{ campaign.name }}</strong>
+        <p class="subtle">{{ campaign.client_name }} · {{ campaign.platform }} · {{ campaign.objective }} · {{ campaign.sub_option }}</p>
+        <p class="subtle">Template: {{ campaign.template_name }} · Daily: ${{ '%.2f' % (campaign.daily_budget_cents / 100) }}</p>
+      </div>
+      <span class="status-chip status-pass">{{ campaign.updated_at.strftime("%Y-%m-%d") if campaign.updated_at else "recent" }}</span>
+    </li>
+    {% else %}
+    <li><span>No saved campaigns yet.</span><span class="subtle">Generate and save your first plan above.</span></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<script id="platform-objectives-data" type="application/json">{{ platform_objectives|tojson }}</script>
+<script id="platform-config-data" type="application/json">{{ platform_config|tojson }}</script>
+{% endblock %}

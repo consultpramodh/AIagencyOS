@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.models import ApprovalRequest, Job, RunLog, WorkflowRun, WorkflowStep, WorkflowTemplate
 from app.services.authz import CurrentContext, require_context, require_role
+from app.services.intelligence import audit_change, emit_event
 from app.services.workflow_engine import approve_run, enqueue_workflow_run
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
@@ -68,6 +69,27 @@ def create_workflow(
     db.add(workflow)
     db.commit()
     db.refresh(workflow)
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="workflow_created",
+        entity_type="workflow",
+        entity_id=workflow.id,
+        severity="info",
+        title=f"Workflow created: {workflow.name}",
+        detail={"detail": workflow.description},
+    )
+    audit_change(
+        db,
+        tenant_id=ctx.tenant.id,
+        actor_user_id=ctx.user.id,
+        entity_type="workflow_template",
+        entity_id=workflow.id,
+        action="create",
+        before={},
+        after={"name": workflow.name, "description": workflow.description, "version": workflow.version},
+    )
+    db.commit()
     return RedirectResponse(url=f"/workflows?tenant_id={ctx.tenant.id}&workflow_id={workflow.id}", status_code=303)
 
 
@@ -92,17 +114,27 @@ def create_step(
         config_json = "{}"
 
     order = db.query(WorkflowStep).filter(WorkflowStep.workflow_id == workflow_id, WorkflowStep.tenant_id == ctx.tenant.id).count() + 1
-    db.add(
-        WorkflowStep(
-            tenant_id=ctx.tenant.id,
-            workflow_id=workflow_id,
-            step_order=order,
-            name=name.strip(),
-            action_type=action_type.strip(),
-            agent_key=agent_key.strip(),
-            config_json=config_json,
-            gating_policy=gating_policy if gating_policy in {"approve", "auto", "pause"} else "approve",
-        )
+    step = WorkflowStep(
+        tenant_id=ctx.tenant.id,
+        workflow_id=workflow_id,
+        step_order=order,
+        name=name.strip(),
+        action_type=action_type.strip(),
+        agent_key=agent_key.strip(),
+        config_json=config_json,
+        gating_policy=gating_policy if gating_policy in {"approve", "auto", "pause"} else "approve",
+    )
+    db.add(step)
+    db.flush()
+    audit_change(
+        db,
+        tenant_id=ctx.tenant.id,
+        actor_user_id=ctx.user.id,
+        entity_type="workflow_step",
+        entity_id=step.id,
+        action="create",
+        before={},
+        after={"workflow_id": workflow_id, "name": step.name, "action_type": step.action_type, "gating_policy": step.gating_policy},
     )
     db.commit()
     return RedirectResponse(url=f"/workflows?tenant_id={ctx.tenant.id}&workflow_id={workflow_id}", status_code=303)
@@ -122,6 +154,17 @@ def run_workflow(
     db.add(run)
     db.commit()
     db.refresh(run)
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="workflow_run_queued",
+        entity_type="workflow_run",
+        entity_id=run.id,
+        severity="info",
+        title=f"Workflow run queued (Run #{run.id})",
+        detail={"detail": workflow.name},
+    )
+    db.commit()
 
     enqueue_workflow_run(ctx.tenant.id, run.id)
     return RedirectResponse(url=f"/workflows?tenant_id={ctx.tenant.id}&workflow_id={workflow_id}", status_code=303)

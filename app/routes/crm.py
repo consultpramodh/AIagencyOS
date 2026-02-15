@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.models import Activity, Client, Contact, Deal, DealStage, Project
 from app.services.authz import CurrentContext, require_context, require_role
+from app.services.intelligence import audit_change, emit_event
 
 router = APIRouter(prefix="/crm", tags=["crm"])
 templates = Jinja2Templates(directory="app/templates")
@@ -80,6 +81,8 @@ def create_deal(
     value_cents: int = Form(0),
     stage_id: int = Form(...),
     contact_id: int | None = Form(None),
+    close_date: str | None = Form(None),
+    probability_pct: int = Form(0),
     ctx: CurrentContext = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
@@ -93,16 +96,34 @@ def create_deal(
         if not contact:
             raise HTTPException(status_code=403, detail="Contact access denied")
 
-    db.add(
-        Deal(
-            tenant_id=ctx.tenant.id,
-            client_id=client_id,
-            contact_id=contact_id,
-            stage_id=stage_id,
-            title=title.strip(),
-            value_cents=value_cents,
-            status="open",
-        )
+    parsed_close = None
+    if close_date:
+        from datetime import date
+
+        parsed_close = date.fromisoformat(close_date)
+
+    deal = Deal(
+        tenant_id=ctx.tenant.id,
+        client_id=client_id,
+        contact_id=contact_id,
+        stage_id=stage_id,
+        title=title.strip(),
+        value_cents=value_cents,
+        close_date=parsed_close,
+        probability_pct=max(0, min(100, probability_pct)),
+        status="open",
+    )
+    db.add(deal)
+    db.flush()
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="deal_created",
+        entity_type="deal",
+        entity_id=deal.id,
+        severity="info",
+        title=f"Deal created: {deal.title}",
+        detail={"detail": f"${deal.value_cents / 100:.2f} in stage {stage.name}"},
     )
     db.commit()
     return RedirectResponse(url=f"/crm?tenant_id={ctx.tenant.id}", status_code=303)
@@ -119,8 +140,29 @@ def move_deal_stage(
     stage = db.query(DealStage).filter(DealStage.id == stage_id, DealStage.tenant_id == ctx.tenant.id).first()
     if not deal or not stage:
         raise HTTPException(status_code=404, detail="Deal not found")
+    old_stage_id = deal.stage_id
     deal.stage_id = stage_id
     deal.status = "won" if stage.is_won else "open"
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="deal_stage_changed",
+        entity_type="deal",
+        entity_id=deal.id,
+        severity="info",
+        title=f"Deal stage changed: {deal.title}",
+        detail={"detail": f"Stage {old_stage_id} -> {stage_id}"},
+    )
+    audit_change(
+        db,
+        tenant_id=ctx.tenant.id,
+        actor_user_id=ctx.user.id,
+        entity_type="deal",
+        entity_id=deal.id,
+        action="stage_changed",
+        before={"stage_id": old_stage_id},
+        after={"stage_id": stage_id, "status": deal.status},
+    )
     db.commit()
     return RedirectResponse(url=f"/crm?tenant_id={ctx.tenant.id}", status_code=303)
 

@@ -1,3 +1,3 @@
-from app.routes import auth, brainstorm, connectors, crm, dashboard, jobs, mobile, workflows
+from app.routes import auth, brainstorm, connectors, crm, dashboard, jobs, marketing, mobile, reports, workflows
 
-__all__ = ["auth", "dashboard", "jobs", "crm", "workflows", "brainstorm", "connectors", "mobile"]
+__all__ = ["auth", "dashboard", "jobs", "crm", "workflows", "brainstorm", "connectors", "mobile", "reports", "marketing"]

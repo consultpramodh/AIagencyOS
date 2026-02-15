@@ -4,20 +4,20 @@
 <section class="hero card glass">
   <div>
     <p class="eyebrow">Brainstorm</p>
-    <h1>Goal to plan in guided steps</h1>
-    <p class="subtle">Answer 5-7 questions, get agent/team/workflow recommendations.</p>
+    <h1>AI command layer</h1>
+    <p class="subtle">Start with a vague goal, answer focused questions, deploy an editable workflow.</p>
   </div>
 </section>
 
-<section class="card">
-  <h2>New Session</h2>
-  <form method="post" action="/brainstorm?tenant_id={{ ctx.tenant.id }}" class="inline-form">
-    <input class="input" name="title" placeholder="Example: grow leads for dental clinic" required />
-    <button class="btn" type="submit">Start</button>
-  </form>
-</section>
-
 <section class="grid">
+  <article class="card">
+    <h2>New Session</h2>
+    <form method="post" action="/brainstorm?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <input class="input" name="title" placeholder="Example: grow leads for dental clinic" required />
+      <button class="btn" type="submit">Start</button>
+    </form>
+  </article>
+
   <article class="card">
     <h2>Sessions</h2>
     <ul class="list">

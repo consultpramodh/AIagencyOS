@@ -4,43 +4,46 @@
 <section class="hero card glass">
   <div>
     <p class="eyebrow">CRM Lite</p>
-    <h1>Deals, contacts, and activities</h1>
-    <p class="subtle">Keep sales lightweight and linked to delivery.</p>
+    <h1>Pipeline control without CRM fatigue</h1>
+    <p class="subtle">Track deals, contacts, and activities in one operating rhythm.</p>
   </div>
 </section>
 
-<section class="card">
-  <h2>Create Contact</h2>
-  <form method="post" action="/crm/contacts?tenant_id={{ ctx.tenant.id }}" class="inline-form">
-    <select class="select" name="client_id" required>
-      {% for client in clients %}
-      <option value="{{ client.id }}">{{ client.name }}</option>
-      {% endfor %}
-    </select>
-    <input class="input" name="name" placeholder="Contact name" required />
-    <input class="input" name="email" placeholder="Email" />
-    <input class="input" name="phone" placeholder="Phone" />
-    <button class="btn" type="submit">Add Contact</button>
-  </form>
-</section>
-
-<section class="card">
-  <h2>Create Deal</h2>
-  <form method="post" action="/crm/deals?tenant_id={{ ctx.tenant.id }}" class="inline-form">
-    <select class="select" name="client_id" required>
-      {% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}
-    </select>
-    <input class="input" name="title" placeholder="Deal title" required />
-    <input class="input" type="number" name="value_cents" placeholder="Value cents" />
-    <select class="select" name="stage_id" required>
-      {% for stage in stages %}<option value="{{ stage.id }}">{{ stage.name }}</option>{% endfor %}
-    </select>
-    <select class="select" name="contact_id">
-      <option value="">No contact</option>
-      {% for contact in contacts %}<option value="{{ contact.id }}">{{ contact.name }}</option>{% endfor %}
-    </select>
-    <button class="btn" type="submit">Add Deal</button>
-  </form>
+<section class="grid">
+  <article class="card">
+    <div class="card-head"><h2>Create Contact</h2></div>
+    <form method="post" action="/crm/contacts?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <select class="select" name="client_id" required>
+        {% for client in clients %}
+        <option value="{{ client.id }}">{{ client.name }}</option>
+        {% endfor %}
+      </select>
+      <input class="input" name="name" placeholder="Contact name" required />
+      <input class="input" name="email" placeholder="Email" />
+      <input class="input" name="phone" placeholder="Phone" />
+      <button class="btn" type="submit">Add Contact</button>
+    </form>
+  </article>
+  <article class="card">
+    <div class="card-head"><h2>Create Deal</h2></div>
+    <form method="post" action="/crm/deals?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <select class="select" name="client_id" required>
+        {% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}
+      </select>
+      <input class="input" name="title" placeholder="Deal title" required />
+      <input class="input" type="number" name="value_cents" placeholder="Value cents" />
+      <input class="input" type="date" name="close_date" />
+      <input class="input" type="number" name="probability_pct" placeholder="Probability %" value="50" />
+      <select class="select" name="stage_id" required>
+        {% for stage in stages %}<option value="{{ stage.id }}">{{ stage.name }}</option>{% endfor %}
+      </select>
+      <select class="select" name="contact_id">
+        <option value="">No contact</option>
+        {% for contact in contacts %}<option value="{{ contact.id }}">{{ contact.name }}</option>{% endfor %}
+      </select>
+      <button class="btn" type="submit">Add Deal</button>
+    </form>
+  </article>
 </section>
 
 <section class="card">

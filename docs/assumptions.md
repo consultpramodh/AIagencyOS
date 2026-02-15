@@ -9,3 +9,5 @@
 - [ASSUMPTION] Workflow execution in M4 uses a lightweight thread-based worker over a DB-backed job table for MVP; can be replaced by Celery/RQ later.
 - [ASSUMPTION] Brainstorm mode defaults to deterministic heuristics and logs outputs as `AIOutput` even without paid LLM usage.
 - [ASSUMPTION] Mobile companion in M7 is delivered as responsive mobile web routes (`/m`) rather than native mobile binaries.
+- [ASSUMPTION] Marketing campaign recommendations are heuristic defaults (platform + objective + budget + days + client-name keyword expansion), and final launch settings remain human-approved before execution.
+- [ASSUMPTION] “Most used templates across the world” are represented as commonly used operational patterns inferred from cross-market ad practice, not platform-provided global usage statistics.

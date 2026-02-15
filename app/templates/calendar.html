@@ -1,9 +1,79 @@
 {% extends "base.html" %}
-{% block page_title %}Calendar{% endblock %}
+{% block page_title %}Decision Calendar{% endblock %}
 {% block content %}
-<section class="hero card glass"><div><p class="eyebrow">Calendar</p><h1>Upcoming Schedule</h1></div></section>
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Decision Calendar</p>
+    <h1>Weekly decision map</h1>
+    <p class="subtle">Cleaner weekly planning with fast daily decision visibility.</p>
+  </div>
+</section>
+
+<section class="cal-shell">
+  <aside class="card cal-sidebar">
+    <div class="card-head"><h2>Today</h2><a class="text-link" href="/tasks?tenant_id={{ ctx.tenant.id }}">Tasks</a></div>
+    <ul class="list cal-today-list">
+      {% for row in today_decisions %}
+      <li>
+        <div>
+          <strong>{{ row[2] }}</strong>
+          <div class="subtle">{{ row[1] }}</div>
+        </div>
+        <span class="status-chip status-due">DUE</span>
+      </li>
+      {% else %}
+      <li>
+        <span>No decisions due today</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="card-head"><h3>Decision Types</h3></div>
+    <div class="feed-controls">
+      {% for t in decision_types %}
+      <span class="status-chip status-pass">{{ t }}</span>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <article class="card cal-main">
+    <div class="card-head"><h2>This Week (Mon-Sun)</h2></div>
+    <div class="cal-week-header">
+      {% for cell in week_cells %}
+      <div class="cal-weekday">{{ cell.label }}<small>{{ cell.date }}</small></div>
+      {% endfor %}
+    </div>
+    <div class="calendar-grid cal-grid-soft">
+      {% for cell in week_cells %}
+      <section class="calendar-col cal-col-soft">
+        {% for item in cell["items"] %}
+        <article class="calendar-item cal-item-soft">
+          <strong>{{ item.title }}</strong>
+          <div class="subtle">{{ item.kind }}</div>
+          <span class="status-chip status-pass">{{ item.decision_type }}</span>
+        </article>
+        {% else %}
+        <p class="subtle">No items</p>
+        {% endfor %}
+      </section>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Upcoming (Next 14 Days)</h2></div>
+  <ul class="list">
+    {% for row in upcoming_rows %}
+    <li><span>{{ row[0] }} · {{ row[1] }}</span><span class="status-chip status-pass">{{ row[2] }}</span></li>
+    {% else %}
+    <li><span>No upcoming tracked items.</span><a class="text-link" href="/tasks?tenant_id={{ ctx.tenant.id }}">Connect tasks module</a></li>
+    {% endfor %}
+  </ul>
+</section>
+
 <section class="card">
   {% if ctx.membership.role in ["owner", "admin"] %}
+  <div class="card-head"><h2>Add Calendar Event</h2></div>
   <form method="post" action="/calendar-events?tenant_id={{ ctx.tenant.id }}" class="inline-form board-form">
     <input class="input" required type="text" name="title" placeholder="Event title" />
     <input class="input" required type="date" name="event_date" />
@@ -11,8 +81,5 @@
     <button class="btn" type="submit">Add event</button>
   </form>
   {% endif %}
-  <ul class="list">
-    {% for row in calendar_rows %}<li><span>{{ row[0] }} · {{ row[1] }}</span><span class="pill">{{ row[2] }}</span></li>{% else %}<li>No upcoming items</li>{% endfor %}
-  </ul>
 </section>
 {% endblock %}

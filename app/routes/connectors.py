@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.models import ConnectorCredential, ConnectorInstance, ConnectorRun, ConnectorType
 from app.services.authz import CurrentContext, require_context, require_role
+from app.services.intelligence import audit_change, emit_event
 
 router = APIRouter(prefix="/connectors", tags=["connectors"])
 templates = Jinja2Templates(directory="app/templates")
@@ -75,6 +76,26 @@ def create_connector(
             is_configured=instance.mode == "manual",
         )
     )
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="connector_config_changed",
+        entity_type="connector_instance",
+        entity_id=instance.id,
+        severity="info",
+        title=f"Connector configured: {instance.name}",
+        detail={"detail": f"Mode {instance.mode}"},
+    )
+    audit_change(
+        db,
+        tenant_id=ctx.tenant.id,
+        actor_user_id=ctx.user.id,
+        entity_type="connector_config",
+        entity_id=instance.id,
+        action="create",
+        before={},
+        after={"name": instance.name, "mode": instance.mode, "status": instance.status},
+    )
     db.commit()
 
     return RedirectResponse(url=f"/connectors?tenant_id={ctx.tenant.id}", status_code=303)
@@ -99,5 +120,15 @@ def run_connector(
         ended_at=datetime.utcnow(),
     )
     db.add(run)
+    emit_event(
+        db,
+        tenant_id=ctx.tenant.id,
+        event_type="connector_run_succeeded",
+        entity_type="connector_run",
+        entity_id=run.id,
+        severity="info",
+        title=f"Connector run completed: {instance.name}",
+        detail={"detail": run.log},
+    )
     db.commit()
     return RedirectResponse(url=f"/connectors?tenant_id={ctx.tenant.id}", status_code=303)

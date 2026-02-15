@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block page_title %}Audit Log{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Audit Trail</p>
+    <h1>Change Tracking</h1>
+    <p class="subtle">Immutable log for workflows, connector config, deals, approvals, and financial edits.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Recent Entries</h2>
+  <ul class="list">
+    {% for row in rows %}
+    <li>
+      <span>{{ row.created_at }} · {{ row.entity_type }}#{{ row.entity_id }} · {{ row.action }}</span>
+      <span class="status-chip status-pass">actor {{ row.actor_user_id if row.actor_user_id else 'system' }}</span>
+    </li>
+    {% else %}
+    <li><span>No audit entries yet.</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

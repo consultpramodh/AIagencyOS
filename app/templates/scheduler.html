@@ -12,11 +12,44 @@
     <button class="btn" type="submit">Add request</button>
   </form>
   {% endif %}
-  <div class="kanban four">
-    <div class="lane"><h3>Intake</h3>{% for item in service_intake %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="scheduled" /><button class="btn btn-small" type="submit">Schedule</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
-    <div class="lane"><h3>Scheduled</h3>{% for item in service_scheduled %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="in_service" /><button class="btn btn-small" type="submit">Start</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
-    <div class="lane"><h3>In Service</h3>{% for item in service_in_service %}<div class="task-card"><strong>{{ item.title }}</strong><form method="post" action="/service-jobs/{{ item.id }}/stage?tenant_id={{ ctx.tenant.id }}" class="inline-form compact"><input type="hidden" name="stage" value="completed" /><button class="btn btn-small" type="submit">Complete</button></form></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
-    <div class="lane"><h3>Completed</h3>{% for item in service_completed %}<div class="task-card"><strong>{{ item.title }}</strong></div>{% else %}<p class="subtle">No items</p>{% endfor %}</div>
+  <p class="subtle">Drag service cards between stages to update pipeline status in one move.</p>
+  <div class="kanban four" data-board="scheduler">
+    <div class="lane drop-lane" data-service-stage="intake">
+      <h3>Intake</h3>
+      {% for item in service_intake %}
+      <div class="task-card dnd-card" data-service-id="{{ item.id }}" draggable="true">
+        <strong>{{ item.title }}</strong>
+        <p class="subtle">{{ item.service_type|capitalize }}{% if item.scheduled_for %} · {{ item.scheduled_for }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No items</p>{% endfor %}
+    </div>
+    <div class="lane drop-lane" data-service-stage="scheduled">
+      <h3>Scheduled</h3>
+      {% for item in service_scheduled %}
+      <div class="task-card dnd-card" data-service-id="{{ item.id }}" draggable="true">
+        <strong>{{ item.title }}</strong>
+        <p class="subtle">{{ item.service_type|capitalize }}{% if item.scheduled_for %} · {{ item.scheduled_for }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No items</p>{% endfor %}
+    </div>
+    <div class="lane drop-lane" data-service-stage="in_service">
+      <h3>In Service</h3>
+      {% for item in service_in_service %}
+      <div class="task-card dnd-card" data-service-id="{{ item.id }}" draggable="true">
+        <strong>{{ item.title }}</strong>
+        <p class="subtle">{{ item.service_type|capitalize }}{% if item.scheduled_for %} · {{ item.scheduled_for }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No items</p>{% endfor %}
+    </div>
+    <div class="lane drop-lane" data-service-stage="completed">
+      <h3>Completed</h3>
+      {% for item in service_completed %}
+      <div class="task-card dnd-card" data-service-id="{{ item.id }}" draggable="true">
+        <strong>{{ item.title }}</strong>
+        <p class="subtle">{{ item.service_type|capitalize }}{% if item.scheduled_for %} · {{ item.scheduled_for }}{% endif %}</p>
+      </div>
+      {% else %}<p class="subtle lane-empty">No items</p>{% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}

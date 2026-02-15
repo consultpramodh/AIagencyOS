@@ -8,11 +8,13 @@ from app.core.security import hash_password
 from datetime import date
 
 from app.models import (
+    Approval,
     AgentRegistry,
     BrainstormQA,
     BrainstormSession,
     CalendarEvent,
     Client,
+    ClientFinancial,
     ConnectorCredential,
     ConnectorInstance,
     ConnectorRun,
@@ -20,7 +22,10 @@ from app.models import (
     Contact,
     Deal,
     DealStage,
+    Event,
     Membership,
+    MarketingCampaign,
+    MarketingKeyword,
     Note,
     Project,
     ServiceJob,
@@ -65,6 +70,8 @@ def run() -> None:
             contact_name="Mike Carter",
             contact_email="mike@acmeplumbing.example",
             contact_phone="+14155550111",
+            website_url="https://acmeplumbing.example",
+            social_handles="@acmeplumbing, @acmeplumbing_help",
             status="active",
         )
         db.add(client)
@@ -143,9 +150,22 @@ def run() -> None:
             stage_id=stage_qualified.id,
             title="Q2 Growth Retainer",
             value_cents=350000,
+            close_date=date.today(),
+            probability_pct=70,
             status="open",
         )
         db.add(deal)
+        db.add(
+            ClientFinancial(
+                tenant_id=tenant_a.id,
+                client_id=client.id,
+                mrr_cents=120000,
+                retainer_cents=120000,
+                last_invoice_cents=120000,
+                cogs_estimate_cents=45000,
+                renewal_date=date.today(),
+            )
+        )
 
         db.add_all(
             [
@@ -205,7 +225,38 @@ def run() -> None:
                 ),
             ]
         )
-        db.add(WorkflowRun(tenant_id=tenant_a.id, workflow_id=wf.id, status="queued", triggered_by_user_id=owner.id))
+        seeded_run = WorkflowRun(
+            tenant_id=tenant_a.id,
+            workflow_id=wf.id,
+            status="blocked",
+            triggered_by_user_id=owner.id,
+            client_id=client.id,
+            project_id=project.id,
+        )
+        db.add(seeded_run)
+        db.flush()
+        db.add(
+            Approval(
+                tenant_id=tenant_a.id,
+                client_id=client.id,
+                project_id=project.id,
+                workflow_run_id=seeded_run.id,
+                status="pending",
+                title="Landing page draft approval",
+                requested_by_user_id=owner.id,
+            )
+        )
+        db.add(
+            Event(
+                tenant_id=tenant_a.id,
+                type="workflow_run_blocked",
+                entity_type="workflow_run",
+                entity_id=seeded_run.id,
+                severity="high",
+                title="Blocked workflow requires approval",
+                detail_json='{"detail":"Awaiting signoff"}',
+            )
+        )
 
         session = BrainstormSession(
             tenant_id=tenant_a.id,
@@ -238,6 +289,27 @@ def run() -> None:
         db.flush()
         db.add(ConnectorCredential(tenant_id=tenant_a.id, connector_instance_id=inst.id, secret_masked="configured-manual", is_configured=True))
         db.add(ConnectorRun(tenant_id=tenant_a.id, connector_instance_id=inst.id, status="succeeded", log="Seed run"))
+
+        campaign = MarketingCampaign(
+            tenant_id=tenant_a.id,
+            client_id=client.id,
+            name="Acme Plumbing Leads - Search",
+            platform="Google Ads",
+            objective="Lead Generation",
+            budget_cents=5000,
+            days=7,
+            existing_keywords_json='["acme plumbing", "emergency plumber"]',
+            plan_json='{"daily_budget_cents":715,"bid_strategy":"Maximize Conversions","recommended_networks":"Search + Retargeting","audience_setup":"Intent keywords + remarketing list","keywords_suggested":["acme plumbing near me","emergency plumber quote"]}',
+        )
+        db.add(campaign)
+        db.flush()
+        db.add_all(
+            [
+                MarketingKeyword(tenant_id=tenant_a.id, campaign_id=campaign.id, keyword="acme plumbing", source="user"),
+                MarketingKeyword(tenant_id=tenant_a.id, campaign_id=campaign.id, keyword="emergency plumber", source="user"),
+                MarketingKeyword(tenant_id=tenant_a.id, campaign_id=campaign.id, keyword="acme plumbing near me", source="suggested"),
+            ]
+        )
 
         db.commit()
         print("Seeded demo tenant/user/client/project")

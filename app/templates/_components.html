@@ -1,0 +1,35 @@
+<div
+  id="command-palette"
+  class="palette"
+  hidden
+  aria-hidden="true"
+  role="dialog"
+  aria-label="Command palette">
+  <div class="palette-box">
+    <div class="palette-head">
+      <span class="subtle">Command Palette</span>
+      <button
+        id="command-close"
+        class="btn btn-ghost btn-small"
+        type="button"
+        aria-label="Close command palette">
+        Esc
+      </button>
+    </div>
+    <label class="sr-only" for="command-input">Search commands</label>
+    <input id="command-input" class="input palette-input" type="text" placeholder="Search clients, projects, workflows, actions..." autocomplete="off" />
+    <ul id="command-results" class="palette-results" role="listbox" aria-label="Command results"></ul>
+  </div>
+</div>
+
+<div id="tactical-overlay" class="overlay" hidden></div>
+<aside id="tactical-panel" class="tactical-panel" aria-hidden="true">
+  <div class="card-head">
+    <h2 id="panel-title">Quick View</h2>
+    <button type="button" class="btn btn-ghost btn-small" id="panel-close">Close</button>
+  </div>
+  <p class="subtle" id="panel-meta"></p>
+  <div id="panel-detail"></div>
+</aside>
+
+<div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>

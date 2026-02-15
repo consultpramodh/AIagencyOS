@@ -1,33 +1,105 @@
 {% extends "base.html" %}
 {% block page_title %}Clients{% endblock %}
 {% block content %}
-<section class="hero card glass"><div><p class="eyebrow">Clients</p><h1>Client Portfolio</h1></div></section>
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Clients</p>
+    <h1>Client Portfolio</h1>
+    <p class="subtle">Data-backed client control with fast updates for contact, economics, deals, and tasks.</p>
+  </div>
+</section>
+
 <section class="card">
-  <h2>All Clients</h2>
-  <ul class="list">
-    {% for client in clients %}
-    <li class="client-row">
-      <div>
-        <strong>{{ client.name }}</strong>
-        <p class="subtle">{{ client.contact_name if client.contact_name else "No contact" }}{% if client.contact_email %} · {{ client.contact_email }}{% endif %}{% if client.contact_phone %} · {{ client.contact_phone }}{% endif %}</p>
-        <div class="quick-actions">
-          {% if client.contact_phone %}<a class="chip-link" href="tel:{{ client.contact_phone }}">Call</a>{% endif %}
-          {% if client.contact_email %}<a class="chip-link" href="mailto:{{ client.contact_email }}">Email</a>{% endif %}
-          {% if client.contact_phone %}<a class="chip-link" href="sms:{{ client.contact_phone }}">Text</a>{% endif %}
-        </div>
-      </div>
-      <span class="pill">{{ client.status|capitalize }}</span>
-    </li>
-    {% else %}<li>No clients yet</li>{% endfor %}
-  </ul>
+  <div class="card-head"><h2>Fast Create</h2><span class="subtle">Create in under 10 seconds</span></div>
   {% if ctx.membership.role in ["owner", "admin"] %}
-  <form method="post" action="/clients?tenant_id={{ ctx.tenant.id }}" class="inline-form">
-    <input class="input" required type="text" name="name" placeholder="Client name" />
+  <form id="client-create-form" method="post" action="/clients?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+    <input class="input" required type="text" name="name" placeholder="Client name" minlength="2" maxlength="120" />
     <input class="input" type="text" name="contact_name" placeholder="Contact name" />
     <input class="input" type="email" name="contact_email" placeholder="Contact email" />
     <input class="input" type="text" name="contact_phone" placeholder="Contact phone" />
+    <input class="input" type="text" inputmode="url" name="website_url" placeholder="Website URL (domain or full URL)" />
+    <input class="input" type="text" name="social_handles" placeholder="Social handles (@a, @b)" />
     <button class="btn" type="submit">Add Client</button>
   </form>
   {% endif %}
+</section>
+
+<section class="card">
+  <h2>All Clients</h2>
+  <ul class="list" data-skeleton>
+    {% for client in clients %}
+    {% set health = health_by_client.get(client.id) %}
+    {% set fin = fin_by_client.get(client.id) %}
+    <li class="client-row">
+      <div>
+        <strong>{{ client.name }}</strong>
+        <span class="status-chip status-{{ 'risk' if health and health.score >= 40 else 'pass' }}">{{ health.risk_level if health else 'Low' }} {{ health.score if health else 0 }}</span>
+        <p class="subtle">{{ client.contact_name if client.contact_name else "No contact" }}{% if client.contact_email %} · {{ client.contact_email }}{% endif %}{% if client.contact_phone %} · {{ client.contact_phone }}{% endif %}</p>
+        <p class="subtle">Web: {{ client.website_url if client.website_url else "—" }} · Social: {{ client.social_handles if client.social_handles else "—" }}</p>
+        {% if health and health.drivers %}<p class="subtle">Drivers: {{ health.drivers|join(', ') }}</p>{% endif %}
+        <p class="subtle">MRR: <strong>${{ '%.2f' % (fin.mrr_cents / 100) if fin else '—' }}</strong> · Retainer: <strong>${{ '%.2f' % (fin.retainer_cents / 100) if fin else '—' }}</strong></p>
+        <div class="quick-actions">
+          <details class="chip-submenu">
+            <summary class="chip-link">Contact</summary>
+            <div class="chip-submenu-list">
+              {% if client.contact_phone %}<a class="chip-link" href="tel:{{ client.contact_phone }}">Call</a>{% endif %}
+              {% if client.contact_email %}<a class="chip-link" href="mailto:{{ client.contact_email }}">Email</a>{% endif %}
+              {% if client.contact_phone %}<a class="chip-link" href="sms:{{ client.contact_phone }}">Text</a>{% endif %}
+              {% if not client.contact_phone and not client.contact_email %}<span class="subtle">Add contact info</span>{% endif %}
+            </div>
+          </details>
+          <button
+            type="button"
+            class="chip-link"
+            data-client-id="{{ client.id }}"
+            data-quick-view
+            data-title="{{ client.name }}"
+            data-meta="Client quick view"
+            data-details="Contact {{ client.contact_name if client.contact_name else 'not set' }}{% if client.contact_email %} · {{ client.contact_email }}{% endif %}{% if client.contact_phone %} · {{ client.contact_phone }}{% endif %}"
+            data-contacts="{% for contact in contacts_by_client.get(client.id, [])[:4] %}{{ contact.name }}{% if contact.email %} · {{ contact.email }}{% endif %}{% if contact.phone %} · {{ contact.phone }}{% endif %}{% if not loop.last %}||{% endif %}{% endfor %}">
+            Quick View
+          </button>
+        </div>
+
+        {% if ctx.membership.role in ["owner", "admin"] %}
+        <details class="client-actions" style="margin-top:8px;">
+          <summary class="subtle">Quick update</summary>
+          <form method="post" action="/crm/contacts?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+            <input type="hidden" name="client_id" value="{{ client.id }}" />
+            <input class="input" name="name" placeholder="Contact name" required />
+            <input class="input" name="email" placeholder="Email" />
+            <input class="input" name="phone" placeholder="Phone" />
+            <button class="btn btn-small" type="submit">Add Contact</button>
+          </form>
+          <form method="post" action="/clients/{{ client.id }}/financials?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+            <input class="input" type="number" name="mrr_cents" placeholder="MRR cents" value="{{ fin.mrr_cents if fin else 0 }}" />
+            <input class="input" type="number" name="retainer_cents" placeholder="Retainer cents" value="{{ fin.retainer_cents if fin else 0 }}" />
+            <input class="input" type="number" name="cogs_estimate_cents" placeholder="COGS cents" value="{{ fin.cogs_estimate_cents if fin else 0 }}" />
+            <input class="input" type="date" name="renewal_date" value="{{ fin.renewal_date if fin and fin.renewal_date else '' }}" />
+            <button class="btn btn-small" type="submit">Save Financials</button>
+          </form>
+          <form method="post" action="/crm/deals?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+            <input type="hidden" name="client_id" value="{{ client.id }}" />
+            <input class="input" name="title" placeholder="Deal name" required />
+            <input class="input" type="number" name="value_cents" placeholder="Value cents" />
+            <select class="select" name="stage_id" required>{% for s in deal_stages %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
+            <input class="input" type="date" name="close_date" />
+            <input class="input" type="number" name="probability_pct" placeholder="Prob %" value="50" />
+            <button class="btn btn-small" type="submit">Add Deal</button>
+          </form>
+          <form method="post" action="/tasks?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+            <input type="hidden" name="client_id" value="{{ client.id }}" />
+            <input class="input" name="title" placeholder="Task title" required />
+            <input class="input" type="date" name="due_date" />
+            <select class="select" name="priority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>
+            <button class="btn btn-small" type="submit">Add Task</button>
+          </form>
+        </details>
+        {% endif %}
+      </div>
+      <span class="status-chip status-pass">{{ client.status|capitalize }}</span>
+    </li>
+    {% else %}<li>No clients yet. Create one from Fast Create.</li>{% endfor %}
+  </ul>
 </section>
 {% endblock %}

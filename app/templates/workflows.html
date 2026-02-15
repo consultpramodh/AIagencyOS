@@ -4,21 +4,21 @@
 <section class="hero card glass">
   <div>
     <p class="eyebrow">Workflows</p>
-    <h1>Automation builder + runner</h1>
-    <p class="subtle">Create workflow, add steps, run, and monitor logs/jobs live.</p>
+    <h1>Power mode automation</h1>
+    <p class="subtle">Design steps, assign agents, gate execution, and monitor telemetry live.</p>
   </div>
 </section>
 
-<section class="card">
-  <h2>Create Workflow</h2>
-  <form method="post" action="/workflows?tenant_id={{ ctx.tenant.id }}" class="inline-form">
-    <input class="input" name="name" placeholder="Workflow name" required />
-    <input class="input" name="description" placeholder="Description" />
-    <button class="btn" type="submit">Create</button>
-  </form>
-</section>
-
 <section class="grid">
+  <article class="card">
+    <h2>Create Workflow</h2>
+    <form method="post" action="/workflows?tenant_id={{ ctx.tenant.id }}" class="inline-form">
+      <input class="input" name="name" placeholder="Workflow name" required />
+      <input class="input" name="description" placeholder="Description" />
+      <button class="btn" type="submit">Create</button>
+    </form>
+  </article>
+
   <article class="card">
     <h2>Workflows</h2>
     <ul class="list">
@@ -32,7 +32,11 @@
     <h2>Jobs Panel</h2>
     <ul class="list">
       {% for job in jobs %}
-      <li><span>#{{ job.id }} {{ job.kind }}</span><span class="pill">{{ job.status }} {{ job.progress }}%</span></li>
+      <li>
+        <span>#{{ job.id }} {{ job.kind }}</span>
+        {% set chip = 'pass' if job.status == 'succeeded' else ('blocked' if job.status == 'blocked' else ('fail' if job.status == 'failed' else 'due')) %}
+        <span class="status-chip status-{{ chip }}">{{ job.status }} {{ job.progress }}%</span>
+      </li>
       {% else %}<li>No jobs yet</li>{% endfor %}
     </ul>
   </article>
@@ -60,7 +64,7 @@
   <h3>Steps</h3>
   <ul class="list">
     {% for step in steps %}
-    <li><span>{{ step.step_order }}. {{ step.name }} · {{ step.agent_key }}</span><span class="pill">{{ step.gating_policy }}</span></li>
+    <li><span>{{ step.step_order }}. {{ step.name }} · {{ step.agent_key }}</span><span class="status-chip status-due">{{ step.gating_policy }}</span></li>
     {% else %}<li>No steps</li>{% endfor %}
   </ul>
 
@@ -69,7 +73,8 @@
     {% for run in runs %}
     <li>
       <span>Run #{{ run.id }} · {{ run.created_at }}</span>
-      <span class="pill">{{ run.status }}</span>
+      {% set chip = 'pass' if run.status == 'succeeded' else ('blocked' if run.status == 'blocked' else ('fail' if run.status == 'failed' else 'due')) %}
+      <span class="status-chip status-{{ chip }}">{{ run.status }}</span>
     </li>
     {% endfor %}
   </ul>

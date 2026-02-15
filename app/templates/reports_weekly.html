@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block page_title %}Weekly Report{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Weekly Command Snapshot</p>
+    <h1>Tenant Weekly Intelligence</h1>
+    <p class="subtle">Deterministic weekly summary with exportable artifacts.</p>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>Snapshot</h2>
+    <ul class="list">
+      <li><span>Report date</span><span class="status-chip status-pass">{{ snapshot.report_date }}</span></li>
+      <li><span>MRR total</span><span>${{ '%.2f' % (snapshot.mrr_total_cents / 100) }}</span></li>
+      <li><span>Pipeline &lt;14d</span><span>${{ '%.2f' % (snapshot.pipeline_14d_cents / 100) }}</span></li>
+      <li><span>Blocked items</span><span>{{ snapshot.blocked_items }}</span></li>
+      <li><span>Workflow wins</span><span>{{ snapshot.wins }}</span></li>
+    </ul>
+  </article>
+  <article class="card">
+    <h2>Top Risks</h2>
+    <ul class="list">
+      {% for risk in snapshot.top_risks %}
+      <li><span>{{ risk }}</span><span class="status-chip status-risk">risk</span></li>
+      {% else %}
+      <li><span>No elevated risks this week.</span></li>
+      {% endfor %}
+    </ul>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Exports</h2>
+  <div class="quick-actions">
+    <a class="chip-link" href="/reports/weekly?tenant_id={{ ctx.tenant.id }}&export=1&fmt=html">Download HTML</a>
+    <a class="chip-link" href="/reports/weekly?tenant_id={{ ctx.tenant.id }}&export=1&fmt=csv">Download CSV</a>
+  </div>
+  <p class="subtle">HTML artifact path: {{ artifact_html }}</p>
+  <p class="subtle">CSV artifact path: {{ artifact_csv }}</p>
+</section>
+{% endblock %}

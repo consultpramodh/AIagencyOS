@@ -1,10 +1,10 @@
 import json
-import threading
 import time
 from datetime import datetime
 
 import app.core.db as core_db
-from app.models import ApprovalRequest, Job, RunLog, RunStep, WorkflowRun, WorkflowStep
+from app.models import Approval, ApprovalRequest, Job, RunLog, RunStep, WorkflowRun, WorkflowStep
+from app.services.intelligence import audit_change, emit_event
 
 
 TERMINAL = {"succeeded", "failed", "blocked", "canceled"}
@@ -20,8 +20,9 @@ def enqueue_workflow_run(tenant_id: int, run_id: int) -> Job:
     finally:
         db.close()
 
-    thread = threading.Thread(target=_execute_workflow_job, args=(job.id,), daemon=True)
-    thread.start()
+    # Execute inline to keep DB session behavior deterministic across local sqlite
+    # and tests; UI still receives progress updates via job/run state polling/SSE.
+    _execute_workflow_job(job.id)
     return job
 
 
@@ -85,6 +86,27 @@ def _execute_workflow_job(job_id: int) -> None:
                         status="pending",
                     )
                 )
+                db.add(
+                    Approval(
+                        tenant_id=run.tenant_id,
+                        client_id=run.client_id,
+                        project_id=run.project_id,
+                        workflow_run_id=run.id,
+                        status="pending",
+                        title=f"{step.name} approval",
+                        requested_by_user_id=run.triggered_by_user_id,
+                    )
+                )
+                emit_event(
+                    db,
+                    tenant_id=run.tenant_id,
+                    event_type="workflow_run_blocked",
+                    entity_type="workflow_run",
+                    entity_id=run.id,
+                    severity="high",
+                    title=f"Blocked workflow requires approval (Run #{run.id})",
+                    detail={"detail": f"Step {step.name} is blocked for approval"},
+                )
                 _log(db, run.tenant_id, run.id, f"Step {idx} blocked for approval")
                 db.commit()
                 return
@@ -102,12 +124,34 @@ def _execute_workflow_job(job_id: int) -> None:
         job.status = "succeeded"
         job.progress = 100
         _log(db, run.tenant_id, run.id, "Workflow succeeded")
+        emit_event(
+            db,
+            tenant_id=run.tenant_id,
+            event_type="workflow_run_succeeded",
+            entity_type="workflow_run",
+            entity_id=run.id,
+            severity="info",
+            title=f"Workflow run succeeded (Run #{run.id})",
+            detail={"detail": "Execution completed"},
+        )
         db.commit()
     except Exception as exc:
         job = db.query(Job).filter(Job.id == job_id).first()
         if job:
             job.status = "failed"
             job.error_message = str(exc)
+            run = db.query(WorkflowRun).filter(WorkflowRun.id == json.loads(job.payload_json or "{}").get("run_id")).first()
+            if run:
+                emit_event(
+                    db,
+                    tenant_id=run.tenant_id,
+                    event_type="workflow_run_failed",
+                    entity_type="workflow_run",
+                    entity_id=run.id,
+                    severity="high",
+                    title=f"Workflow run failed (Run #{run.id})",
+                    detail={"detail": str(exc)},
+                )
             db.commit()
     finally:
         db.close()
@@ -127,9 +171,39 @@ def approve_run(run_id: int, tenant_id: int, user_id: int) -> None:
             .first()
         )
         if approval:
+            before_status = approval.status
             approval.status = "approved"
             approval.decided_at = datetime.utcnow()
             approval.decided_by_user_id = user_id
+            mirror = (
+                db.query(Approval)
+                .filter(Approval.workflow_run_id == run_id, Approval.tenant_id == tenant_id, Approval.status == "pending")
+                .order_by(Approval.id.asc())
+                .first()
+            )
+            if mirror:
+                mirror.status = "approved"
+                mirror.decided_at = datetime.utcnow()
+            emit_event(
+                db,
+                tenant_id=tenant_id,
+                event_type="approval_pending",
+                entity_type="approval",
+                entity_id=approval.id,
+                severity="info",
+                title=f"Approval resolved for run #{run_id}",
+                detail={"detail": f"Status {before_status} -> approved"},
+            )
+            audit_change(
+                db,
+                tenant_id=tenant_id,
+                actor_user_id=user_id,
+                entity_type="approval",
+                entity_id=approval.id,
+                action="approved",
+                before={"status": before_status},
+                after={"status": "approved"},
+            )
 
         run.status = "running"
 

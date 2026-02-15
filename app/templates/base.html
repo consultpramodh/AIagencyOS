@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="{% if not ctx %}auth-body{% endif %}">
+  <body class="{% if not ctx %}auth-body{% endif %}" {% if ctx %}data-tenant-id="{{ ctx.tenant.id }}"{% endif %}>
     {% if ctx %}
     <div class="app-shell">
       <aside class="sidebar">
@@ -23,23 +23,25 @@
 
         <nav class="side-nav">
           <p class="side-label">Command</p>
-          <a class="side-link {% if request.url.path == '/' %}active{% endif %}" href="/?tenant_id={{ ctx.tenant.id }}">Dashboard</a>
-          <a class="side-link {% if request.url.path == '/operations' %}active{% endif %}" href="/operations?tenant_id={{ ctx.tenant.id }}">Operations</a>
+          <a class="side-link {% if request.url.path in ['/', '/dashboard'] %}active{% endif %}" href="/dashboard?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Today Dashboard</span><span class="side-link-hint">What needs attention now</span></a>
+          <a class="side-link {% if request.url.path == '/operations' %}active{% endif %}" href="/operations?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Daily Operations</span><span class="side-link-hint">Tasks and activity control</span></a>
 
           <p class="side-label">Workspaces</p>
-          <a class="side-link {% if request.url.path == '/clients' %}active{% endif %}" href="/clients?tenant_id={{ ctx.tenant.id }}">Clients</a>
-          <a class="side-link {% if request.url.path == '/projects' %}active{% endif %}" href="/projects?tenant_id={{ ctx.tenant.id }}">Projects</a>
-          <a class="side-link {% if request.url.path == '/tasks' %}active{% endif %}" href="/tasks?tenant_id={{ ctx.tenant.id }}">Tasks</a>
-          <a class="side-link {% if request.url.path == '/notes' %}active{% endif %}" href="/notes?tenant_id={{ ctx.tenant.id }}">Notes</a>
-          <a class="side-link {% if request.url.path == '/scheduler' %}active{% endif %}" href="/scheduler?tenant_id={{ ctx.tenant.id }}">Scheduler</a>
-          <a class="side-link {% if request.url.path == '/calendar' %}active{% endif %}" href="/calendar?tenant_id={{ ctx.tenant.id }}">Calendar</a>
+          <a class="side-link {% if request.url.path == '/clients' %}active{% endif %}" href="/clients?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Clients</span><span class="side-link-hint">Company and contact details</span></a>
+          <a class="side-link {% if request.url.path == '/projects' %}active{% endif %}" href="/projects?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Projects</span><span class="side-link-hint">Work being delivered</span></a>
+          <a class="side-link {% if request.url.path == '/tasks' %}active{% endif %}" href="/tasks?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Tasks</span><span class="side-link-hint">To do, doing, done</span></a>
+          <a class="side-link {% if request.url.path == '/notes' %}active{% endif %}" href="/notes?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Notes & Docs</span><span class="side-link-hint">Meeting notes and files</span></a>
+          <a class="side-link {% if request.url.path == '/scheduler' %}active{% endif %}" href="/scheduler?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Service Pipeline</span><span class="side-link-hint">Move jobs by stage</span></a>
+          <a class="side-link {% if request.url.path == '/calendar' %}active{% endif %}" href="/calendar?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Calendar</span><span class="side-link-hint">Weekly plan and deadlines</span></a>
 
           <p class="side-label">Growth</p>
-          <a class="side-link {% if request.url.path == '/crm' %}active{% endif %}" href="/crm?tenant_id={{ ctx.tenant.id }}">CRM</a>
-          <a class="side-link {% if request.url.path == '/workflows' %}active{% endif %}" href="/workflows?tenant_id={{ ctx.tenant.id }}">Workflows</a>
-          <a class="side-link {% if request.url.path == '/brainstorm' %}active{% endif %}" href="/brainstorm?tenant_id={{ ctx.tenant.id }}">Brainstorm</a>
-          <a class="side-link {% if request.url.path == '/connectors' %}active{% endif %}" href="/connectors?tenant_id={{ ctx.tenant.id }}">Connectors</a>
-          <a class="side-link {% if request.url.path == '/m' %}active{% endif %}" href="/m?tenant_id={{ ctx.tenant.id }}">Mobile</a>
+          <a class="side-link {% if request.url.path == '/crm' %}active{% endif %}" href="/crm?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Sales Pipeline</span><span class="side-link-hint">Deals and follow-ups</span></a>
+          <a class="side-link {% if request.url.path == '/marketing' %}active{% endif %}" href="/marketing?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Marketing</span><span class="side-link-hint">Ad planning and SEO content</span></a>
+          <a class="side-link {% if request.url.path == '/workflows' %}active{% endif %}" href="/workflows?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Automation</span><span class="side-link-hint">Step-by-step automations</span></a>
+          <a class="side-link {% if request.url.path == '/brainstorm' %}active{% endif %}" href="/brainstorm?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">AI Planning</span><span class="side-link-hint">Turn ideas into plans</span></a>
+          <a class="side-link {% if request.url.path == '/connectors' %}active{% endif %}" href="/connectors?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Integrations</span><span class="side-link-hint">Connect ad and data tools</span></a>
+          <a class="side-link {% if request.url.path.startswith('/reports') %}active{% endif %}" href="/reports/weekly?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Reports</span><span class="side-link-hint">Weekly snapshots</span></a>
+          <a class="side-link {% if request.url.path == '/m' %}active{% endif %}" href="/m?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Mobile View</span><span class="side-link-hint">Approvals on phone</span></a>
         </nav>
 
         <form method="post" action="/logout" class="side-logout">
@@ -51,6 +53,14 @@
         <header class="app-topbar">
           <h1 class="top-title">{% block page_title %}Dashboard{% endblock %}</h1>
           <div class="top-right">
+            <button id="theme-toggle" class="theme-switch" type="button" aria-label="Switch day and night mode" title="Toggle day/night">
+              <span class="theme-switch-track">
+                <span class="theme-icon sun" aria-hidden="true">☀</span>
+                <span class="theme-icon moon" aria-hidden="true">☾</span>
+              </span>
+              <span class="theme-switch-thumb" aria-hidden="true"></span>
+            </button>
+            <button id="easy-toggle" class="btn btn-ghost btn-small" type="button" aria-label="Toggle easy mode">Easy</button>
             <span class="tenant-chip">{{ ctx.tenant.name }}</span>
             <span class="tenant-chip">{{ ctx.user.full_name }}</span>
           </div>
@@ -69,12 +79,15 @@
             <div class="pulse-metric"><span class="pulse-label">Tenant</span><span class="pulse-value">{{ ctx.tenant.name }}</span><span class="pulse-trend neutral">live</span></div>
           {% endif %}
         </div>
+    {% endif %}
 
-        <main class="container">{% block content %}{% endblock %}</main>
+        <main class="container {% if not ctx %}auth-only{% endif %}">{% block content %}{% endblock %}</main>
+
+    {% if ctx %}
       </div>
     </div>
-    {% else %}
-    <main class="container auth-only">{% block content %}{% endblock %}</main>
+    {% include "_components.html" %}
     {% endif %}
+    <script src="/static/app.js"></script>
   </body>
 </html>

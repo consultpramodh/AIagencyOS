@@ -54,6 +54,8 @@ class Client(Base):
     contact_name: Mapped[str] = mapped_column(String(120), default="")
     contact_email: Mapped[str] = mapped_column(String(255), default="")
     contact_phone: Mapped[str] = mapped_column(String(40), default="")
+    website_url: Mapped[str] = mapped_column(String(255), default="")
+    social_handles: Mapped[str] = mapped_column(String(255), default="")
     status: Mapped[str] = mapped_column(String(30), default="active")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -98,6 +100,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True, index=True)
     project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"), nullable=True, index=True)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String(160), index=True)
@@ -105,6 +108,7 @@ class Task(Base):
     status: Mapped[str] = mapped_column(String(24), default="todo", index=True)
     priority: Mapped[str] = mapped_column(String(24), default="medium")
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -192,6 +196,8 @@ class Deal(Base):
     stage_id: Mapped[int] = mapped_column(ForeignKey("deal_stages.id"), index=True)
     title: Mapped[str] = mapped_column(String(160), index=True)
     value_cents: Mapped[int] = mapped_column(Integer, default=0)
+    close_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    probability_pct: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(24), default="open", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -259,6 +265,8 @@ class WorkflowRun(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
     workflow_id: Mapped[int] = mapped_column(ForeignKey("workflow_templates.id"), index=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True, index=True)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
     triggered_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -409,4 +417,89 @@ class ConnectorRun(Base):
     log: Mapped[str] = mapped_column(String, default="")
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ClientFinancial(Base):
+    __tablename__ = "client_financials"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"), index=True)
+    mrr_cents: Mapped[int] = mapped_column(Integer, default=0)
+    retainer_cents: Mapped[int] = mapped_column(Integer, default=0)
+    last_invoice_cents: Mapped[int] = mapped_column(Integer, default=0)
+    cogs_estimate_cents: Mapped[int] = mapped_column(Integer, default=0)
+    renewal_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    type: Mapped[str] = mapped_column(String(60), index=True)
+    entity_type: Mapped[str] = mapped_column(String(60), index=True)
+    entity_id: Mapped[int] = mapped_column(Integer, index=True)
+    severity: Mapped[str] = mapped_column(String(24), default="info", index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    detail_json: Mapped[str] = mapped_column(String, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Approval(Base):
+    __tablename__ = "approvals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True, index=True)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id"), nullable=True, index=True)
+    workflow_run_id: Mapped[int | None] = mapped_column(ForeignKey("workflow_runs.id"), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(24), default="pending", index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    requested_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    actor_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    entity_type: Mapped[str] = mapped_column(String(60), index=True)
+    entity_id: Mapped[int] = mapped_column(Integer, index=True)
+    action: Mapped[str] = mapped_column(String(60), index=True)
+    before_json: Mapped[str] = mapped_column(String, default="{}")
+    after_json: Mapped[str] = mapped_column(String, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class MarketingCampaign(Base):
+    __tablename__ = "marketing_campaigns"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(160), index=True)
+    platform: Mapped[str] = mapped_column(String(60), index=True)
+    objective: Mapped[str] = mapped_column(String(60), index=True)
+    budget_cents: Mapped[int] = mapped_column(Integer, default=0)
+    days: Mapped[int] = mapped_column(Integer, default=7)
+    existing_keywords_json: Mapped[str] = mapped_column(String, default="[]")
+    plan_json: Mapped[str] = mapped_column(String, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MarketingKeyword(Base):
+    __tablename__ = "marketing_keywords"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    campaign_id: Mapped[int] = mapped_column(ForeignKey("marketing_campaigns.id"), index=True)
+    keyword: Mapped[str] = mapped_column(String(160), index=True)
+    source: Mapped[str] = mapped_column(String(24), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

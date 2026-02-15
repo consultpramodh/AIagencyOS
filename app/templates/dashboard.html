@@ -1,154 +1,214 @@
 {% extends "base.html" %}
-{% block page_title %}Command Center{% endblock %}
+{% block page_title %}Today{% endblock %}
 {% block content %}
-<section class="hero tactical">
-  <div>
-    <p class="eyebrow">One-Glance Daily Operations</p>
-    <h2 class="hero-title">{{ ctx.tenant.name }} Command Center</h2>
-    <p class="subtle">Controlled power: assess risk, clear blockers, move revenue.</p>
+<section class="card dashboard-controls">
+  <div class="dashboard-control-group">
+    <p class="eyebrow">Dashboard Scope</p>
+    <div class="mode-toggle" role="group" aria-label="Dashboard mode">
+      <a class="mode-chip {% if current_mode != 'client' %}active{% endif %}" href="/dashboard?tenant_id={{ ctx.tenant.id }}&mode=admin">Admin</a>
+      <a class="mode-chip {% if current_mode == 'client' %}active{% endif %}" href="/dashboard?tenant_id={{ ctx.tenant.id }}&mode=client{% if selected_client %}&client_id={{ selected_client.id }}{% endif %}">Client</a>
+    </div>
   </div>
-  <div class="hero-actions">
-    <button class="btn btn-ghost" id="focus-mode-toggle" type="button">Focus Mode</button>
-    <label class="tenant-switch">Tenant
-      <select class="select" onchange="window.location='/?tenant_id=' + this.value">
-        {% for m in memberships %}
-        <option value="{{ m.tenant_id }}" {% if m.tenant_id == ctx.tenant.id %}selected{% endif %}>Tenant {{ m.tenant_id }} ({{ m.role }})</option>
-        {% endfor %}
-      </select>
-    </label>
+  {% if current_mode == "client" %}
+  <label class="tenant-switch">Client
+    <select class="select" onchange="window.location='/dashboard?tenant_id={{ ctx.tenant.id }}&mode=client&client_id=' + this.value">
+      <option value="">Select client</option>
+      {% for client in clients %}
+      <option value="{{ client.id }}" {% if selected_client and client.id == selected_client.id %}selected{% endif %}>{{ client.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <label class="tenant-switch">Tenant
+    <select class="select" onchange="window.location='/dashboard?tenant_id=' + this.value">
+      {% for m in memberships %}
+      <option value="{{ m.tenant_id }}" {% if m.tenant_id == ctx.tenant.id %}selected{% endif %}>Tenant {{ m.tenant_id }} ({{ m.role }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="btn btn-ghost" id="focus-mode-toggle" type="button">Focus Mode</button>
+</section>
+
+<section class="hero tactical hero-triage">
+  <div>
+    <p class="eyebrow">Strategic Triage</p>
+    <h2 class="hero-title">
+      {% if current_mode == "client" and selected_client %}
+      {{ selected_client.name }} Client Dashboard
+      {% else %}
+      {{ ctx.tenant.name }} Admin Dashboard
+      {% endif %}
+    </h2>
+    <p class="subtle">
+      {% if current_mode == "client" and selected_client %}
+      Client-specific decisions, risks, and growth levers.
+      {% else %}
+      Cross-client command view for agency-wide decisions, risks, and revenue.
+      {% endif %}
+    </p>
+  </div>
+  <div class="triage-numbers">
+    <div><span>Decisions</span><strong>{{ decisions|length }}</strong></div>
+    <div><span>Threats</span><strong>{{ threats|length }}</strong></div>
+    <div><span>Opportunities</span><strong>{{ opportunities|length }}</strong></div>
   </div>
 </section>
 
+<section class="card macro-strip" data-focus-hide>
+  <div class="macro-item"><span>Revenue (Month)</span><strong>${{ '%.2f' % (macro_metrics.mrr_total / 100) }}</strong><svg viewBox="0 0 80 18" aria-hidden="true"><polyline points="1,13 14,10 26,12 39,7 52,8 64,5 79,6" /></svg></div>
+  <div class="macro-item"><span>Pipeline &lt;14d</span><strong>${{ '%.2f' % (macro_metrics.pipeline_14d / 100) }}</strong></div>
+  <div class="macro-item"><span>Renewals</span><strong>{{ macro_metrics.renewals_soon }}</strong></div>
+  <div class="macro-item"><span>Automation Load</span><strong>{{ macro_metrics.automation_load }}</strong></div>
+</section>
+
+{% if current_mode == "client" and not selected_client %}
+<section class="card">
+  <div class="card-head">
+    <h2>Select a Client</h2>
+    <a class="text-link" href="/clients?tenant_id={{ ctx.tenant.id }}">Open clients</a>
+  </div>
+  <p class="subtle">Pick a client in the Client mode selector to switch from agency-wide Admin dashboard to a dedicated client dashboard.</p>
+</section>
+{% endif %}
+
 <section id="command-layout" class="command-layout">
   <aside id="intelligence-col" class="card intelligence-col">
-    <div class="card-head"><h2>Intelligence Feed</h2></div>
+    <div class="card-head">
+      <h2>Intelligence Feed</h2>
+      <button id="feed-mute" class="chip" type="button">Mute</button>
+    </div>
+    <div class="feed-controls">
+      <button class="chip active" type="button" data-feed-filter="all">All</button>
+      <button class="chip" type="button" data-feed-filter="fail">Failures</button>
+      <button class="chip" type="button" data-feed-filter="blocked">Blocked</button>
+      <button class="chip" type="button" data-feed-filter="approval">Approvals</button>
+      <button class="chip" type="button" data-feed-filter="revenue">Revenue</button>
+    </div>
     <div class="feed-scroll">
       {% for item in intelligence_items %}
-      <button type="button" class="feed-item" data-feed-title="{{ item.title }}" data-feed-meta="{{ item.meta }}" data-feed-detail="{{ item.detail }}">
+      <button
+        type="button"
+        class="feed-item"
+        data-feed-kind="{{ item.kind }}"
+        data-feed-id="{{ item.kind }}-{{ loop.index }}-{{ item.title|replace(' ', '-') }}"
+        data-quick-view
+        data-title="{{ item.title }}"
+        data-meta="{{ item.meta }}"
+        data-details="{{ item.detail }}">
         <span class="dot {{ item.level }}"></span>
         <span class="feed-copy">
           <span class="feed-title">{{ item.title }}</span>
-          <span class="feed-meta">{{ item.meta }}</span>
+          <span class="feed-meta">{{ item.meta }} · {{ item.timestamp if item.timestamp else 'recent' }}</span>
         </span>
       </button>
-      {% else %}
-      <p class="subtle">No intelligence events yet.</p>
       {% endfor %}
     </div>
   </aside>
 
   <div id="strategic-col" class="strategic-col">
-    <section class="stats">
-      <article class="stat card metric-attention"><p>Approvals Pending</p><h3>{{ approvals_pending }}</h3></article>
-      <article class="stat card metric-risk"><p>Tasks Due</p><h3>{{ today_tasks|length }}</h3></article>
-      <article class="stat card metric-trust"><p>Active Jobs</p><h3>{{ recent_jobs|length }}</h3></article>
-    </section>
-
-    <section class="card strategic-panel">
-      <div class="card-head"><h2>Strategic Triage</h2></div>
-      <ul class="triage-list">
-        <li><strong>{{ today_tasks|length }}</strong> due tasks require decision sequencing.</li>
-        <li><strong>{{ approvals_pending }}</strong> approvals are blocking downstream workflow steps.</li>
-        <li><strong>{{ recent_runs|length }}</strong> recent runs show current automation throughput.</li>
-      </ul>
-    </section>
-
-    <section id="client-grid" class="card">
-      <div class="card-head"><h2>Client Power Grid</h2><a class="text-link" href="/clients?tenant_id={{ ctx.tenant.id }}">Open Clients</a></div>
-      <div class="power-grid">
-        {% for client in clients %}
-        <article class="client-tile" data-feed-title="{{ client.name }}" data-feed-meta="Client detail" data-feed-detail="Contact: {{ client.contact_name if client.contact_name else 'not set' }}{% if client.contact_email %} · {{ client.contact_email }}{% endif %}{% if client.contact_phone %} · {{ client.contact_phone }}{% endif %}">
-          <h3>{{ client.name }}</h3>
-          <p>Revenue <strong>N/A</strong> · ROAS <strong>N/A</strong> · Risk <strong>Low</strong></p>
-          <p>Workflows <strong>{{ recent_runs|length }}</strong> · Approvals <strong>{{ approvals_pending }}</strong></p>
-          <div class="quick-actions">
-            {% if client.contact_phone %}<a class="chip-link" href="tel:{{ client.contact_phone }}">Call</a>{% endif %}
-            {% if client.contact_email %}<a class="chip-link" href="mailto:{{ client.contact_email }}">Email</a>{% endif %}
-            {% if client.contact_phone %}<a class="chip-link" href="sms:{{ client.contact_phone }}">Text</a>{% endif %}
+    <section class="card">
+      <div class="card-head"><h2>Decisions</h2><a class="text-link" href="/workflows?tenant_id={{ ctx.tenant.id }}">Open workflow approvals</a></div>
+      <div class="decision-stack">
+        {% for item in decisions %}
+        <div class="decision-row">
+          <div>
+            <strong>{{ item.title }}: {{ item.value }}</strong>
+            <span class="status-chip status-{{ item.status|lower }}">{{ item.status }}</span>
+            <p>{{ item.detail }}</p>
           </div>
-        </article>
-        {% else %}
-        <p class="subtle">No clients yet.</p>
+          {% if item.cta %}<a class="text-link" href="{{ item.cta }}">{{ item.cta_label }}</a>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if ctx.membership.role in ["owner", "admin"] %}
+      <form method="post" action="/approvals?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+        <input class="input" type="text" name="title" placeholder="Add pending approval title" required />
+        <button class="btn btn-small" type="submit">Add Approval</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card" data-focus-hide>
+      <div class="card-head"><h2>Threats</h2><a class="text-link" href="/workflows?tenant_id={{ ctx.tenant.id }}">Investigate</a></div>
+      <div class="decision-stack">
+        {% for item in threats %}
+        <div class="decision-row">
+          <div>
+            <strong>{{ item.title }}: {{ item.value }}</strong>
+            <span class="status-chip status-{{ item.status|lower }}">{{ item.status }}</span>
+            <p>{{ item.detail }}</p>
+          </div>
+        </div>
         {% endfor %}
       </div>
     </section>
 
-    <section class="grid">
-      <article class="card">
-        <div class="card-head"><h2>Today Queue</h2><a class="text-link" href="/tasks?tenant_id={{ ctx.tenant.id }}">Open Tasks</a></div>
-        <ul class="list">
-          {% for task in today_tasks %}<li><span>{{ task.title }}{% if task.due_date %} ({{ task.due_date }}){% endif %}</span><span class="pill">{{ task.status|replace('_',' ')|title }}</span></li>{% else %}<li>No due tasks today</li>{% endfor %}
-        </ul>
-      </article>
-      <article class="card">
-        <div class="card-head"><h2>Upcoming Calendar</h2><a class="text-link" href="/calendar?tenant_id={{ ctx.tenant.id }}">Open Calendar</a></div>
-        <ul class="list">
-          {% for row in calendar_rows %}<li><span>{{ row[0] }} · {{ row[1] }}</span><span class="pill">{{ row[2] }}</span></li>{% else %}<li>No upcoming items</li>{% endfor %}
-        </ul>
-      </article>
-      <article class="card">
-        <div class="card-head"><h2>Recent Runs</h2><a class="text-link" href="/workflows?tenant_id={{ ctx.tenant.id }}">Open Workflows</a></div>
-        <ul class="list">
-          {% for run in recent_runs %}<li><span>Run #{{ run.id }}</span><span class="pill">{{ run.status }}</span></li>{% else %}<li>No runs yet</li>{% endfor %}
-        </ul>
-      </article>
+    <section class="card" data-focus-hide>
+      <div class="card-head"><h2>Opportunities</h2><a class="text-link" href="/crm?tenant_id={{ ctx.tenant.id }}">Open pipeline</a></div>
+      <div class="decision-stack">
+        {% for item in opportunities %}
+        <div class="decision-row">
+          <div>
+            <strong>{{ item.title }}: {{ item.value }}</strong>
+            <span class="status-chip status-{{ item.status|lower }}">{{ item.status }}</span>
+            <p>{{ item.detail }}</p>
+          </div>
+          {% if item.cta %}<a class="text-link" href="{{ item.cta }}">{{ item.cta_label }}</a>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card" id="client-grid" data-focus-hide>
+      <div class="card-head"><h2>Client Power Grid</h2><a class="text-link" href="/clients?tenant_id={{ ctx.tenant.id }}">Open Clients</a></div>
+      <div class="power-grid tactical-grid" data-skeleton>
+        {% for tile in client_tiles %}
+        <article class="client-tile">
+          <div class="tile-head">
+            <h3>{{ tile.name }}</h3>
+            <span class="status-chip status-pass">{{ tile.status|capitalize }}</span>
+          </div>
+          <p>Revenue: <strong>{{ tile.revenue }}</strong> · ROAS: <strong>{{ tile.roas }}</strong></p>
+          <p>Risk: <strong>{{ tile.risk }}</strong></p>
+          <div class="risk-bar"><span class="risk-fill {% if tile.risk_score < 40 %}muted{% endif %}" style="width: {{ tile.risk_score if tile.risk_score else 20 }}%"></span></div>
+          <p>Workflows: <strong>{{ tile.workflows }}</strong> · Approvals: <strong>{{ tile.approvals }}</strong> · Blocked: <strong>{{ tile.blocked }}</strong></p>
+          <p>Pipeline: <strong>${{ '%.2f' % (tile.pipeline_value / 100) }}</strong></p>
+          {% if tile.risk_drivers %}
+          <p class="subtle">Drivers: {{ tile.risk_drivers|join(", ") }}</p>
+          {% endif %}
+          <div class="quick-actions">
+            <button class="chip-link" type="button" data-client-id="{{ tile.id }}" data-quick-view data-title="{{ tile.name }}" data-meta="Client tactical quick view" data-details="Client status {{ tile.status|capitalize }}">Quick View</button>
+            <a class="chip-link" href="/projects?tenant_id={{ ctx.tenant.id }}">Open Projects</a>
+            <details class="chip-submenu">
+              <summary class="chip-link">Contact</summary>
+              <div class="chip-submenu-list">
+                {% if tile.contact_phone %}<a class="chip-link" href="tel:{{ tile.contact_phone }}">Call</a>{% endif %}
+                {% if tile.contact_email %}<a class="chip-link" href="mailto:{{ tile.contact_email }}">Email</a>{% endif %}
+                {% if tile.contact_phone %}<a class="chip-link" href="sms:{{ tile.contact_phone }}">Text</a>{% endif %}
+                {% if not tile.contact_phone and not tile.contact_email %}<span class="subtle">Add contact info</span>{% endif %}
+              </div>
+            </details>
+          </div>
+        </article>
+        {% else %}
+        <p class="subtle">No clients yet. Add your first client to activate tactical tiles.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card" data-focus-hide>
+      <div class="card-head"><h2>System Health</h2><a class="text-link" href="/calendar?tenant_id={{ ctx.tenant.id }}">Open calendar</a></div>
+      <ul class="list">
+        {% for row in calendar_rows %}
+        <li>
+          <span>{{ row[0] }} · {{ row[2] }}</span>
+          <span class="status-chip status-pass">{{ row[1] }}</span>
+        </li>
+        {% else %}
+        <li><span>No scheduled operations.</span><a class="text-link" href="/scheduler?tenant_id={{ ctx.tenant.id }}">Open scheduler</a></li>
+        {% endfor %}
+      </ul>
     </section>
   </div>
 </section>
-
-<div id="tactical-overlay" class="overlay" hidden></div>
-<aside id="tactical-panel" class="tactical-panel" aria-hidden="true">
-  <div class="card-head">
-    <h2 id="panel-title">Detail</h2>
-    <button type="button" class="btn btn-ghost btn-small" id="panel-close">Close</button>
-  </div>
-  <p class="subtle" id="panel-meta"></p>
-  <p id="panel-detail"></p>
-</aside>
-
-<script>
-  const feedButtons = document.querySelectorAll(".feed-item, .client-tile");
-  const panel = document.getElementById("tactical-panel");
-  const overlay = document.getElementById("tactical-overlay");
-  const title = document.getElementById("panel-title");
-  const meta = document.getElementById("panel-meta");
-  const detail = document.getElementById("panel-detail");
-  const closeBtn = document.getElementById("panel-close");
-  const focusBtn = document.getElementById("focus-mode-toggle");
-  const intelligenceCol = document.getElementById("intelligence-col");
-  const clientGrid = document.getElementById("client-grid");
-
-  function openPanel(t, m, d) {
-    title.textContent = t;
-    meta.textContent = m;
-    detail.textContent = d;
-    panel.classList.add("open");
-    panel.setAttribute("aria-hidden", "false");
-    overlay.hidden = false;
-  }
-
-  function closePanel() {
-    panel.classList.remove("open");
-    panel.setAttribute("aria-hidden", "true");
-    overlay.hidden = true;
-  }
-
-  feedButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      openPanel(btn.dataset.feedTitle || "Detail", btn.dataset.feedMeta || "", btn.dataset.feedDetail || "");
-    });
-  });
-
-  closeBtn.addEventListener("click", closePanel);
-  overlay.addEventListener("click", closePanel);
-
-  let focusMode = false;
-  focusBtn.addEventListener("click", () => {
-    focusMode = !focusMode;
-    document.body.classList.toggle("focus-mode", focusMode);
-    intelligenceCol.style.display = focusMode ? "none" : "block";
-    clientGrid.style.display = focusMode ? "none" : "block";
-    focusBtn.textContent = focusMode ? "Exit Focus" : "Focus Mode";
-  });
-</script>
 {% endblock %}

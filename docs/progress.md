@@ -60,3 +60,10 @@
 - Mobile companion page (`/m`) for approvals, today queue, run status, quick notes
 - Approval action available from mobile via workflow approval endpoint
 - Mobile-first compact layout using shared responsive styles
+
+## Post-M7 UX Upgrades
+
+- Admin vs Client dashboard mode toggle on `/dashboard` with client-specific view support
+- New standalone Marketing module on `/marketing`
+- Paid campaign calculator with platform/objective/budget/day planning
+- Client-aware keyword suggestions that extend (not replace) already-added keywords
