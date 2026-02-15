@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Executive Dashboard</p>
+    <h1>{{ ctx.tenant.name }}</h1>
+    <p class="subtle">Welcome back, {{ ctx.user.full_name }}. Role: <strong>{{ ctx.membership.role }}</strong>.</p>
+  </div>
+  <label class="tenant-switch">Switch tenant
+      <select class="select" onchange="window.location='/?tenant_id=' + this.value">
+        {% for m in memberships %}
+        <option value="{{ m.tenant_id }}" {% if m.tenant_id == ctx.tenant.id %}selected{% endif %}>Tenant {{ m.tenant_id }} ({{ m.role }})</option>
+        {% endfor %}
+      </select>
+    </label>
+</section>
+
+<section class="stats">
+  <article class="stat card">
+    <p>Clients</p>
+    <h3>{{ clients|length }}</h3>
+  </article>
+  <article class="stat card">
+    <p>Projects</p>
+    <h3>{{ projects|length }}</h3>
+  </article>
+  <article class="stat card">
+    <p>Active User</p>
+    <h3>{{ ctx.user.full_name }}</h3>
+  </article>
+</section>
+
+<section class="grid">
+
+  <article id="clients" class="card">
+    <h2>Client Portfolio</h2>
+    <ul class="list">
+      {% for client in clients %}
+      <li><span>{{ client.name }}</span><span class="pill">{{ client.status|capitalize }}</span></li>
+      {% else %}
+      <li>No clients yet</li>
+      {% endfor %}
+    </ul>
+    {% if ctx.membership.role in ["owner", "admin"] %}
+    <form method="post" action="/clients" class="inline-form">
+      <input class="input" required type="text" name="name" placeholder="New client" />
+      <button class="btn" type="submit">Add</button>
+    </form>
+    {% endif %}
+  </article>
+
+  <article id="projects" class="card">
+    <h2>Delivery Pipeline</h2>
+    <ul class="list">
+      {% for project in projects %}
+      <li><span>{{ project.name }}</span><span class="pill">{{ project.status|capitalize }}</span></li>
+      {% else %}
+      <li>No projects yet</li>
+      {% endfor %}
+    </ul>
+    {% if ctx.membership.role in ["owner", "admin"] and clients|length > 0 %}
+    <form method="post" action="/projects" class="inline-form">
+      <select class="select" name="client_id" required>
+        {% for client in clients %}
+        <option value="{{ client.id }}">{{ client.name }}</option>
+        {% endfor %}
+      </select>
+      <input class="input" required type="text" name="name" placeholder="New project" />
+      <button class="btn" type="submit">Add</button>
+    </form>
+    {% endif %}
+  </article>
+
+  <article id="jobs" class="card">
+    <h2>Operations Feed</h2>
+    <p class="subtle">Live system progress (tenant-scoped).</p>
+    <div class="progress-rail"><div id="progress-fill" class="progress-fill"></div></div>
+    <div id="job-log" class="log"></div>
+  </article>
+</section>
+<script>
+  const log = document.getElementById("job-log");
+  const fill = document.getElementById("progress-fill");
+  const stream = new EventSource("/jobs/stream?tenant_id={{ ctx.tenant.id }}");
+  stream.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const line = document.createElement("div");
+    line.className = "log-line";
+    line.textContent = `${data.at} - ${data.status} - ${data.progress}% - ${data.message}`;
+    log.prepend(line);
+    fill.style.width = `${data.progress}%`;
+    if (data.status === "succeeded") stream.close();
+  };
+</script>
+{% endblock %}

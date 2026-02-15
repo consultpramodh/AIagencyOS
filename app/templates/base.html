@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title if title else "AI Marketing Agency OS" }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar glass">
+      <div class="brand-wrap">
+        <div class="brand-dot"></div>
+        <div class="brand">AI Marketing Agency OS</div>
+      </div>
+      {% if ctx %}
+      <nav class="topnav">
+        <a href="/?tenant_id={{ ctx.tenant.id }}">Today</a>
+        <a href="/?tenant_id={{ ctx.tenant.id }}#clients">Clients</a>
+        <a href="/?tenant_id={{ ctx.tenant.id }}#projects">Projects</a>
+        <a href="/?tenant_id={{ ctx.tenant.id }}#jobs">Jobs</a>
+      </nav>
+      <form method="post" action="/logout">
+        <button class="btn btn-ghost" type="submit">Logout</button>
+      </form>
+      {% endif %}
+    </header>
+    <main class="container">{% block content %}{% endblock %}</main>
+  </body>
+</html>
