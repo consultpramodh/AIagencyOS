@@ -60,6 +60,7 @@ make run
 - `/workflows` Workflow builder + runs + approvals + logs
 - `/brainstorm` Brainstorm Q/A to recommendation to workflow
 - `/connectors` Connector framework (manual-first stubs)
+- `/finance` Personal financial tracker/planner (accounts, transactions, savings goals)
 - `/m` Mobile companion (approvals/today/run status/notes)
 
 ## Tests

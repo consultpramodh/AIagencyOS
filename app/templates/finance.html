@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block page_title %}Personal Finance{% endblock %}
+{% block content %}
+<section class="hero card glass">
+  <div>
+    <p class="eyebrow">Money Planner</p>
+    <h1>Personal Financial Tracker</h1>
+    <p class="subtle">Track accounts, log spending/income, and plan savings goals in one workspace.</p>
+  </div>
+</section>
+
+<section class="stats four">
+  <article class="card stat"><p>Total Balance</p><h3>${{ '%.2f' % (total_balance_cents / 100) }}</h3></article>
+  <article class="card stat"><p>Income (recent)</p><h3>${{ '%.2f' % (income_cents / 100) }}</h3></article>
+  <article class="card stat"><p>Spending + Investing</p><h3>${{ '%.2f' % ((expense_cents + invested_cents) / 100) }}</h3></article>
+  <article class="card stat"><p>Net Cashflow</p><h3>${{ '%.2f' % (net_cents / 100) }}</h3></article>
+</section>
+
+<section class="grid-two">
+  <article class="card">
+    <div class="card-head"><h2>Accounts</h2><span class="subtle">{{ accounts|length }} total</span></div>
+    {% if ctx.membership.role in ["owner", "admin"] %}
+    <form method="post" action="/finance/accounts?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+      <input class="input" type="text" name="name" placeholder="Account name" required />
+      <input class="input" type="text" name="institution" placeholder="Institution" />
+      <select class="select" name="account_type">
+        <option value="checking">Checking</option>
+        <option value="savings">Savings</option>
+        <option value="credit">Credit Card</option>
+        <option value="investment">Investment</option>
+      </select>
+      <input class="input" type="number" name="balance" step="0.01" min="0" placeholder="Starting balance" required />
+      <button class="btn" type="submit">Add Account</button>
+    </form>
+    {% endif %}
+    <ul class="list compact-list">
+      {% for account in accounts %}
+      <li>
+        <div>
+          <strong>{{ account.name }}</strong>
+          <p class="subtle">{{ account.institution or 'No institution' }} · {{ account.account_type|capitalize }}</p>
+        </div>
+        <span>${{ '%.2f' % (account.balance_cents / 100) }}</span>
+      </li>
+      {% else %}
+      <li><span>No accounts yet.</span><span class="subtle">Add your first account above.</span></li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="card">
+    <div class="card-head"><h2>Savings Goals</h2><span class="subtle">${{ '%.2f' % (goal_current_cents / 100) }} / ${{ '%.2f' % (goal_target_cents / 100) }}</span></div>
+    {% if ctx.membership.role in ["owner", "admin"] %}
+    <form method="post" action="/finance/goals?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+      <input class="input" type="text" name="title" placeholder="Goal title" required />
+      <input class="input" type="number" name="target_amount" step="0.01" min="0" placeholder="Target" required />
+      <input class="input" type="number" name="current_amount" step="0.01" min="0" placeholder="Current" />
+      <input class="input" type="date" name="target_date" />
+      <select class="select" name="priority">
+        <option value="high">High</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <button class="btn" type="submit">Add Goal</button>
+    </form>
+    {% endif %}
+    <ul class="list compact-list">
+      {% for goal in goals %}
+      <li>
+        <div>
+          <strong>{{ goal.title }}</strong>
+          <p class="subtle">Priority: {{ goal.priority|capitalize }}{% if goal.target_date %} · Target: {{ goal.target_date }}{% endif %}</p>
+        </div>
+        <span>${{ '%.2f' % (goal.current_cents / 100) }} / ${{ '%.2f' % (goal.target_cents / 100) }}</span>
+      </li>
+      {% else %}
+      <li><span>No goals yet.</span><span class="subtle">Create one to start planning.</span></li>
+      {% endfor %}
+    </ul>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Recent Transactions</h2><span class="subtle">Latest 20</span></div>
+  {% if ctx.membership.role in ["owner", "admin"] and accounts %}
+  <form method="post" action="/finance/transactions?tenant_id={{ ctx.tenant.id }}" class="inline-form compact">
+    <select class="select" name="account_id" required>
+      {% for account in accounts %}
+      <option value="{{ account.id }}">{{ account.name }}</option>
+      {% endfor %}
+    </select>
+    <input class="input" type="date" name="transaction_date" required />
+    <input class="input" type="text" name="category" placeholder="Category" required />
+    <input class="input" type="text" name="description" placeholder="Description" />
+    <input class="input" type="number" name="amount" step="0.01" min="0" placeholder="Amount" required />
+    <select class="select" name="transaction_kind">
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+      <option value="investment">Investment</option>
+    </select>
+    <button class="btn" type="submit">Log Transaction</button>
+  </form>
+  {% endif %}
+
+  <ul class="list compact-list">
+    {% for tx in transactions %}
+    <li>
+      <div>
+        <strong>{{ tx.transaction_date }} · {{ tx.category|capitalize }}</strong>
+        <p class="subtle">{{ account_names.get(tx.account_id, 'Unknown account') }}{% if tx.description %} · {{ tx.description }}{% endif %}</p>
+      </div>
+      <span>{% if tx.transaction_kind == 'income' %}+{% else %}-{% endif %}${{ '%.2f' % (tx.amount_cents / 100) }}</span>
+    </li>
+    {% else %}
+    <li><span>No transactions yet.</span><span class="subtle">Log income or spending to build your plan.</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}
