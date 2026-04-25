@@ -37,6 +37,7 @@
           <p class="side-label">Growth</p>
           <a class="side-link {% if request.url.path == '/crm' %}active{% endif %}" href="/crm?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Sales Pipeline</span><span class="side-link-hint">Deals and follow-ups</span></a>
           <a class="side-link {% if request.url.path == '/marketing' %}active{% endif %}" href="/marketing?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Marketing</span><span class="side-link-hint">Ad planning and SEO content</span></a>
+          <a class="side-link {% if request.url.path == '/finance' %}active{% endif %}" href="/finance?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Personal Finance</span><span class="side-link-hint">Budget, spending, savings goals</span></a>
           <a class="side-link {% if request.url.path == '/workflows' %}active{% endif %}" href="/workflows?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Automation</span><span class="side-link-hint">Step-by-step automations</span></a>
           <a class="side-link {% if request.url.path == '/brainstorm' %}active{% endif %}" href="/brainstorm?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">AI Planning</span><span class="side-link-hint">Turn ideas into plans</span></a>
           <a class="side-link {% if request.url.path == '/connectors' %}active{% endif %}" href="/connectors?tenant_id={{ ctx.tenant.id }}"><span class="side-link-title">Integrations</span><span class="side-link-hint">Connect ad and data tools</span></a>

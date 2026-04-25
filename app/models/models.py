@@ -503,3 +503,44 @@ class MarketingKeyword(Base):
     keyword: Mapped[str] = mapped_column(String(160), index=True)
     source: Mapped[str] = mapped_column(String(24), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PersonalAccount(Base):
+    __tablename__ = "personal_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120), index=True)
+    account_type: Mapped[str] = mapped_column(String(40), default="checking")
+    institution: Mapped[str] = mapped_column(String(120), default="")
+    balance_cents: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PersonalTransaction(Base):
+    __tablename__ = "personal_transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("personal_accounts.id"), index=True)
+    transaction_date: Mapped[date] = mapped_column(Date, index=True)
+    category: Mapped[str] = mapped_column(String(60), default="general", index=True)
+    description: Mapped[str] = mapped_column(String(200), default="")
+    amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    transaction_kind: Mapped[str] = mapped_column(String(20), default="expense", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SavingsGoal(Base):
+    __tablename__ = "savings_goals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"), index=True)
+    title: Mapped[str] = mapped_column(String(160), index=True)
+    target_cents: Mapped[int] = mapped_column(Integer, default=0)
+    current_cents: Mapped[int] = mapped_column(Integer, default=0)
+    target_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    priority: Mapped[str] = mapped_column(String(24), default="medium")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
