@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block page_title %}Quest Journal{% endblock %}
+{% block content %}
+<section id="rpg-quest-app" class="quest-app">
+  <header class="quest-header">
+    <p class="quest-kicker">Arcane Ledger</p>
+    <h2>RPG Quest Journal</h2>
+    <p class="subtle">A magical artifact for your daily deeds, streaks, talents, and treasure rewards.</p>
+  </header>
+
+  <div class="book-tabs" role="tablist" aria-label="Quest tabs">
+    <button class="book-tab active" data-quest-tab="quests">Quests</button>
+    <button class="book-tab" data-quest-tab="character">Character Sheet</button>
+    <button class="book-tab" data-quest-tab="talents">Talents</button>
+    <button class="book-tab" data-quest-tab="achievements">Achievements</button>
+    <button class="book-tab" data-quest-tab="rewards">Rewards</button>
+    <button class="book-tab" data-quest-tab="settings">Settings</button>
+  </div>
+
+  <div class="quest-book">
+    <section class="quest-page left-page">
+      <div class="page-head">
+        <h3>Active Quests</h3>
+        <button class="btn btn-small" id="new-quest-btn" type="button">Sign New Contract</button>
+      </div>
+      <div id="quest-list" class="quest-list"></div>
+    </section>
+
+    <section class="quest-page right-page">
+      <div class="page-head"><h3>Quest Log & Character</h3></div>
+      <div id="quest-log" class="quest-log"></div>
+      <div id="character-panel" class="character-panel"></div>
+    </section>
+  </div>
+
+  <dialog id="quest-modal" class="quest-modal">
+    <form method="dialog" id="quest-form" class="quest-form">
+      <h3>Quest Contract</h3>
+      <input required name="title" placeholder="Quest title" class="input" />
+      <textarea name="description" placeholder="Flavor description" class="input"></textarea>
+      <div class="split">
+        <select name="category" class="select"><option>Health</option><option>Intelligence</option><option>Money</option><option>Relationships</option></select>
+        <select name="difficulty" class="select"><option>Trivial</option><option>Easy</option><option selected>Medium</option><option>Hard</option><option>Epic</option><option>Legendary</option></select>
+      </div>
+      <button class="btn" type="submit">Sign and Accept ✒️</button>
+      <button class="btn btn-ghost" type="button" id="close-quest-modal">Cancel</button>
+    </form>
+  </dialog>
+</section>
+{% endblock %}

@@ -722,3 +722,31 @@
     });
   }
 })();
+
+(function questJournal(){
+  const root = document.getElementById('rpg-quest-app');
+  if(!root) return;
+  const xpByDifficulty={Trivial:10,Easy:25,Medium:50,Hard:100,Epic:200,Legendary:500};
+  const state=JSON.parse(localStorage.getItem('rpg_quest_state')||'null')||{character:{name:'Warden',title:'of the Ledger',className:'Adventurer',stats:{Vitality:10,Wisdom:10,Fortune:10,Charisma:10},xp:0,gold:0,streak:0,talentPoints:0,talents:{discipline:0,ambition:0,fortune:0,wisdom:0,resilience:0}},quests:[],log:[],lastQuestDate:null};
+  const save=()=>localStorage.setItem('rpg_quest_state',JSON.stringify(state));
+  const levelFromXp=(xp)=>{let n=0;while(xp>=((n*n*50)+(n*50)))n++;return Math.max(1,n)};
+  function render(){
+    const list=document.getElementById('quest-list'); const log=document.getElementById('quest-log'); const panel=document.getElementById('character-panel');
+    list.innerHTML=state.quests.map((q,i)=>`<article class='quest-card'><strong>${q.title}</strong><div>${q.description||''}</div><div class='quest-meta'><span>${q.category}</span><span>${q.difficulty}</span><span>${q.state}</span></div><div class='quick-actions'><button class='chip-link' data-do='progress' data-i='${i}'>Advance</button><button class='chip-link' data-do='complete' data-i='${i}'>Complete</button><button class='chip-link' data-do='abandon' data-i='${i}'>Abandon</button></div></article>`).join('')||"<p>No quests yet.</p>";
+    log.innerHTML=state.log.slice(-8).reverse().map(x=>`<div class='quest-log-entry'>${x}</div>`).join('')||"<p class='subtle'>No completed quests in the chronicle.</p>";
+    const c=state.character, lvl=levelFromXp(c.xp), hp=100+c.stats.Vitality*5, mp=50+c.stats.Wisdom*3;
+    panel.innerHTML=`<h4>${c.name}, ${c.title}</h4><p>Class: ${c.className} · Level ${lvl} · XP ${c.xp} · Gold ${c.gold}</p><p>HP ${hp} · MP ${mp} · 🔥 Day ${c.streak}</p><p>Vitality ${c.stats.Vitality} · Wisdom ${c.stats.Wisdom} · Fortune ${c.stats.Fortune} · Charisma ${c.stats.Charisma}</p>`;
+    save();
+  }
+  document.getElementById('new-quest-btn').onclick=()=>document.getElementById('quest-modal').showModal();
+  document.getElementById('close-quest-modal').onclick=()=>document.getElementById('quest-modal').close();
+  document.getElementById('quest-form').onsubmit=(e)=>{e.preventDefault();const fd=new FormData(e.target);state.quests.push({title:fd.get('title'),description:fd.get('description'),category:fd.get('category'),difficulty:fd.get('difficulty'),state:'Available'});e.target.reset();document.getElementById('quest-modal').close();render();};
+  document.getElementById('quest-list').onclick=(e)=>{const btn=e.target.closest('button[data-do]');if(!btn)return;const i=Number(btn.dataset.i),q=state.quests[i];if(!q)return;
+    if(btn.dataset.do==='progress') q.state='In Progress';
+    if(btn.dataset.do==='abandon'){q.state='Abandoned'; state.character.stats.Vitality=Math.max(1,state.character.stats.Vitality-1);}
+    if(btn.dataset.do==='complete'){q.state='Completed';const today=new Date().toISOString().slice(0,10); if(state.lastQuestDate!==today){state.character.xp+=25; state.character.streak+=1;state.lastQuestDate=today;} let gain=xpByDifficulty[q.difficulty]||50; gain*=1+Math.min(state.character.streak,10)*0.1; state.character.xp+=Math.floor(gain); state.character.gold+=Math.floor(gain*(1+(state.character.stats.Fortune-10)*0.03)); state.log.push(`Completed ${q.title} (+${Math.floor(gain)} XP)`);}
+    render();
+  };
+  document.querySelectorAll('[data-quest-tab]').forEach((tab)=>tab.onclick=()=>{document.querySelectorAll('[data-quest-tab]').forEach(x=>x.classList.remove('active'));tab.classList.add('active');});
+  render();
+})();
