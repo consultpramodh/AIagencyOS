@@ -1,6 +1,6 @@
-# AI Marketing Agency OS
+# Tattva Assistant
 
-M1-M7 build for a multi-tenant AI Marketing Agency OS using FastAPI, Jinja2, SQLAlchemy, and Alembic.
+Private founder workstation and assistant OS using FastAPI, Jinja2, SQLAlchemy, and Alembic.
 
 ## One-command local run
 
@@ -39,6 +39,8 @@ Open [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login).
    - `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 4. Seed once (optional):
    - `python scripts/seed.py`
+
+See [docs/deployment.md](docs/deployment.md) for the recommended Supabase + Render setup.
 
 ## Commands
 

@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routes import auth, brainstorm, connectors, crm, dashboard, jobs, marketing, mobile, reports, workflows
+from app.routes import auth, brainstorm, connectors, crm, dashboard, health, jobs, marketing, mobile, reports, workflows
 
-app = FastAPI(title="AI Marketing Agency OS")
+app = FastAPI(title="Tattva Assistant")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(health.router)
 app.include_router(dashboard.router)
 app.include_router(crm.router)
 app.include_router(workflows.router)
