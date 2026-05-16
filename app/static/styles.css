@@ -1788,3 +1788,23 @@ body.theme-light .toast {
     grid-template-columns: 1fr;
   }
 }
+
+/* RPG Quest Journal */
+.quest-app{--ink:#2d1b0e;--ink2:#4a3728;--parch:#f4e4bc;--parch2:#e8d5a3;--wax:#8b2500;--gold:#d4af37;--night:#1a1a3e;font-family:"Cormorant Garamond",serif;background:radial-gradient(circle at top,#352313,#1b1209 60%);padding:16px;border:1px solid #5b432d;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.45)}
+.quest-header h2{font-family:"Cinzel",serif;color:var(--gold);font-size:34px}
+.book-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.book-tab{background:linear-gradient(180deg,#5a3f2a,#3b2a1d);color:#f8eecf;border:1px solid #8a6747;padding:8px 12px;border-radius:12px;cursor:pointer}
+.book-tab.active{box-shadow:0 0 0 2px #d4af3755;color:#ffd700}
+.quest-book{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quest-page{background:linear-gradient(180deg,var(--parch),var(--parch2));color:var(--ink);border-radius:14px;padding:14px;min-height:520px;border:2px solid #c5aa72;position:relative;overflow:hidden}
+.quest-page:before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(0,0,0,.06) 1px, transparent 1px);background-size:3px 3px;opacity:.35;pointer-events:none}
+.page-head{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.quest-card{position:relative;z-index:1;background:#f8ebc8;border:1px solid #b5965e;border-left:8px solid #8b2500;padding:10px;border-radius:10px;margin:8px 0;transition:transform .15s,box-shadow .15s}
+.quest-card:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(66,41,18,.25)}
+.quest-meta{display:flex;gap:8px;font-size:13px;color:#684f31}
+.quest-log-entry{font-family:"Caveat",cursive;font-size:24px;border-bottom:1px dashed #9a7f51;padding:6px 0}
+.character-panel{margin-top:12px;padding-top:10px;border-top:2px double #7f5f33}
+.quest-modal{border:none;border-radius:16px;padding:0;background:transparent}
+.quest-form{background:linear-gradient(180deg,var(--parch),var(--parch2));padding:16px;border-radius:14px;border:2px solid #b99558;display:grid;gap:10px;min-width:360px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:980px){.quest-book{grid-template-columns:1fr}.quest-page{min-height:unset}}

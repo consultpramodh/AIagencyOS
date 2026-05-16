@@ -568,6 +568,12 @@ def tasks_page(request: Request, ctx: CurrentContext = Depends(require_context),
     )
 
 
+@router.get("/quests")
+def quests_page(request: Request, ctx: CurrentContext = Depends(require_context), db: Session = Depends(get_db)):
+    base = _base_context(ctx, db)
+    return templates.TemplateResponse(request, "rpg_quests.html", {**base})
+
+
 @router.get("/notes")
 def notes_page(request: Request, ctx: CurrentContext = Depends(require_context), db: Session = Depends(get_db)):
     base = _base_context(ctx, db)
